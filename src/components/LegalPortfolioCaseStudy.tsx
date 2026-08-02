@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import legalPortfolioVideo from "../assets/images/video.mp4";
 import heroBackgroundImage from "../assets/images/legal_portfolio_1783261537202.jpg";
-import mockupImage from "../assets/images/legal_portfolio_mockup_1783335879310.jpg";
+import mockupImage from "../assets/images/mockup.png";
 import { 
   ArrowLeft, Check, AlertCircle, Play, RefreshCw, 
   Layers, Search, Activity, Users, Clock, Cpu, 
