@@ -40,21 +40,21 @@ export default function Achievements() {
       title: "Secured 1st Place",
       badge: "CredGenius Hackathon",
       caption: "Secured 1st place with Team Tech Titans",
-      src: "three",
+      src: three,
       fallback: "/src/assets/images/designer_sketching_1783340098648.jpg"
     },
     {
       title: "Team Celebration",
       badge: "Titans Victory",
       caption: "Cross-functional collaboration and teamwork",
-      src: "two",
+      src: two,
       fallback: "/src/assets/images/neha_saree_portrait_1783342595759.jpg"
     },
     {
       title: "Award Certificate",
       badge: "Credgenics Award",
       caption: "Award recognition certificate",
-      src: "one",
+      src: one,
       fallback: "/src/assets/images/designer_portrait_1783340014240.jpg"
     }
   ];
