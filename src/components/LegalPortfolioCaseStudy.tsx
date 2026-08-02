@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import legalPortfolioVideo from "../assets/images/video.mp4";
 import { 
   ArrowLeft, Check, AlertCircle, Play, RefreshCw, 
   Layers, Search, Activity, Users, Clock, Cpu, 
@@ -1911,7 +1912,7 @@ export default function LegalPortfolioCaseStudy({ onClose }: LegalPortfolioCaseS
                     {/* Video Display Viewport */}
                     <div className="relative aspect-[16/10] bg-neutral-950 flex items-center justify-center overflow-hidden group/video">
                       <video
-                        src="/src/assets/images/legal_portfolio_demo.mp4"
+                        src={legalPortfolioVideo}
                         poster="/src/assets/images/case_management_1783261572643.jpg"
                         autoPlay
                         loop
