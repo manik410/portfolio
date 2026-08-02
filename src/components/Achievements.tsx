@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Trophy, Award, ArrowLeft, ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import three from "../assets/images/three.jpeg";
+import two from "../assets/images/two.jpeg";
+import one from "../assets/images/one.jpeg";
 
 interface ImageWithFallbackProps {
   src: string;
@@ -37,21 +40,21 @@ export default function Achievements() {
       title: "Secured 1st Place",
       badge: "CredGenius Hackathon",
       caption: "Secured 1st place with Team Tech Titans",
-      src: "/src/assets/images/hackathon_cheque.jpg",
+      src: "three",
       fallback: "/src/assets/images/designer_sketching_1783340098648.jpg"
     },
     {
       title: "Team Celebration",
       badge: "Titans Victory",
       caption: "Cross-functional collaboration and teamwork",
-      src: "/src/assets/images/hackathon_team.jpg",
+      src: "two",
       fallback: "/src/assets/images/neha_saree_portrait_1783342595759.jpg"
     },
     {
       title: "Award Certificate",
       badge: "Credgenics Award",
       caption: "Award recognition certificate",
-      src: "/src/assets/images/outstanding_award.jpg",
+      src: "one",
       fallback: "/src/assets/images/designer_portrait_1783340014240.jpg"
     }
   ];
