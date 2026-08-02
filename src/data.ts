@@ -1,5 +1,5 @@
 import { Project, TimelineItem, ProcessStep, SkillCategory } from "./types";
-import mockupImage from "../assets/images/mainphoto.png";
+import mockupImage from "./assets/images/mainphoto.png";
 
 export const projectsData: Project[] = [
   {
