@@ -137,7 +137,6 @@ export default function About() {
                     </div>
                     <div>
                       <h4 className="font-sans text-xs font-bold text-neutral-900">Neha Sharma</h4>
-                      <p className="font-mono text-[9px] uppercase tracking-wider text-neutral-500">Gurgaon, India</p>
                     </div>
                   </div>
                 </div>
