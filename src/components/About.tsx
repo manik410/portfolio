@@ -77,7 +77,7 @@ export default function About() {
             transition={{ duration: 0.6 }}
             className="inline-flex items-center gap-2 px-3 py-1 bg-white border border-neutral-200 shadow-sm rounded-full mb-5"
           >
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="font-mono text-[10px] font-extrabold uppercase tracking-widest text-neutral-600">
               Who I Am
             </span>
@@ -131,7 +131,7 @@ export default function About() {
                   
                   {/* Floating SaaS-style Badge */}
                   <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-md px-4 py-3 border border-neutral-100 rounded-xl shadow-lg flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
                       <Sparkles className="w-4 h-4" />
                     </div>
                     <div>
@@ -153,7 +153,7 @@ export default function About() {
             className="lg:col-span-7 flex flex-col gap-6"
           >
             <h3 className="font-display text-2xl sm:text-3xl font-black text-neutral-900 tracking-tight flex items-center gap-3">
-              <span className="text-amber-500">✦</span> My Journey
+              <span className="text-emerald-500">✦</span> My Journey
             </h3>
             
             <div className="font-sans text-[16px] sm:text-[17px] text-neutral-600 space-y-6 leading-relaxed font-medium">

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowRight, Eye } from "lucide-react";
+import { ArrowRight, Eye, Clock, Sparkles } from "lucide-react";
 import { Project } from "../types";
 import { projectsData } from "../data";
 import CaseStudyViewer from "./CaseStudyViewer";
@@ -50,19 +50,39 @@ export default function Work() {
                     {/* Color Accent Bar on Left */}
                     <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${project.accentColor} z-10`} />
 
-                    {/* Highly polished image overlay */}
-                    <img
-                      src={project.image}
-                      alt={project.title}
-                      referrerPolicy="no-referrer"
-                      className="w-full aspect-[4/3] object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-                    />
+                    {/* Coming Soon Badge Overlay */}
+                    {project.comingSoon && (
+                      <div className="absolute top-3 right-3 bg-neutral-900/90 backdrop-blur-md text-amber-300 font-mono text-[10px] font-bold px-3 py-1 rounded-full shadow-md flex items-center gap-1.5 border border-amber-500/30 z-20 tracking-wider uppercase">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                        Coming Soon
+                      </div>
+                    )}
+
+                    {/* Highly polished image or video overlay */}
+                    {project.video ? (
+                      <video
+                        src={project.video}
+                        poster={project.image}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-full aspect-[4/3] object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <img
+                        src={project.image}
+                        alt={project.title}
+                        referrerPolicy="no-referrer"
+                        className="w-full aspect-[4/3] object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                      />
+                    )}
 
                     {/* View overlay trigger */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2">
                       <div className="bg-white text-black px-5 py-2.5 rounded-full font-sans text-xs font-semibold shadow-md flex items-center gap-1.5 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                        <Eye className="w-4 h-4" />
-                        Examine Design Work
+                        <Eye className="w-4 h-4 text-[#10B981]" />
+                        {project.comingSoon ? "Preview Design Work" : "Examine Design Work"}
                       </div>
                     </div>
                   </div>
@@ -82,6 +102,15 @@ export default function Work() {
                     <span className="font-mono text-[10px] sm:text-[11px] font-bold text-black/40 tracking-wider uppercase">
                       {project.role}
                     </span>
+                    {project.comingSoon && (
+                      <>
+                        <span className="text-black/30 font-light select-none">•</span>
+                        <span className="font-mono text-[10px] sm:text-[11px] font-bold tracking-wider text-amber-800 bg-amber-100/90 border border-amber-300/80 px-2.5 py-0.5 rounded uppercase flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-amber-600" />
+                          Coming Soon
+                        </span>
+                      </>
+                    )}
                   </div>
 
                   {/* Title */}
@@ -124,8 +153,15 @@ export default function Work() {
                     onClick={() => setSelectedProject(project)}
                     className="font-display text-[15px] font-bold text-black hover:text-accent-orange transition-colors flex items-center gap-1.5 group cursor-pointer relative py-1"
                   >
-                    Read Case Study
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+                    {project.comingSoon ? "Case Study Coming Soon" : "Read Case Study"}
+                    {project.comingSoon ? (
+                      <span className="font-mono text-[10px] font-extrabold uppercase bg-amber-100 text-amber-800 border border-amber-300/80 px-2 py-0.5 rounded ml-1 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-amber-600" />
+                        Upcoming
+                      </span>
+                    ) : (
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+                    )}
                     <span className="absolute bottom-0 left-0 w-full h-[1.5px] bg-black group-hover:bg-accent-orange transition-colors" />
                   </button>
                 </div>

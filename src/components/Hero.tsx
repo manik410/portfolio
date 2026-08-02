@@ -121,14 +121,14 @@ export default function Hero({ onExploreWork, onAboutMe }: HeroProps) {
         {/* LEFT COLUMN: Editorial Typography & Copy */}
         <div className="lg:col-span-5 flex flex-col items-start text-left relative z-20" id="hero-left">
           
-          {/* Small handwritten orange greeting */}
+          {/* Small handwritten green greeting */}
           <motion.div
             initial={{ opacity: 0, rotate: -15, scale: 0.8 }}
             animate={{ opacity: 1, rotate: -5, scale: 1 }}
             transition={{ duration: 0.6, type: "spring" }}
             className="mb-1 pl-1"
           >
-            <span className="font-hand text-[38px] sm:text-[44px] text-[#FF6A00] font-bold tracking-wide select-none">
+            <span className="font-hand text-[38px] sm:text-[44px] text-[#10B981] font-bold tracking-wide select-none">
               Hello, I'm
             </span>
           </motion.div>
@@ -155,9 +155,9 @@ export default function Hero({ onExploreWork, onAboutMe }: HeroProps) {
                   className="inline-block relative font-serif italic font-light text-neutral-800"
                 >
                   Sharma
-                  {/* Under the name add an orange underline */}
+                  {/* Under the name add a green underline */}
                   <svg
-                    className="absolute left-0 -bottom-2 w-[100%] h-3 text-[#FF6A00] pointer-events-none"
+                    className="absolute left-0 -bottom-2 w-[100%] h-3 text-[#10B981] pointer-events-none"
                     viewBox="0 0 320 15"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
@@ -177,7 +177,7 @@ export default function Hero({ onExploreWork, onAboutMe }: HeroProps) {
             </h1>
           </div>
 
-          {/* Description Paragraph with Orange underlines */}
+          {/* Description Paragraph with Green underlines */}
           <motion.p
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
@@ -188,21 +188,21 @@ export default function Hero({ onExploreWork, onAboutMe }: HeroProps) {
             I design enterprise SaaS products that{" "}
             <span className="relative inline-block px-1 font-bold text-neutral-900">
               simplify
-              <svg className="absolute left-0 -bottom-0.5 w-full h-1 text-[#FF6A00]/95 pointer-events-none" viewBox="0 0 100 10" preserveAspectRatio="none" fill="none">
+              <svg className="absolute left-0 -bottom-0.5 w-full h-1 text-[#10B981]/95 pointer-events-none" viewBox="0 0 100 10" preserveAspectRatio="none" fill="none">
                 <motion.path d="M 2 5 Q 50 1, 98 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.9, duration: 0.5 }} />
               </svg>
             </span>{" "}
             complex workflows,{" "}
             <span className="relative inline-block px-1 font-bold text-neutral-900">
               transform
-              <svg className="absolute left-0 -bottom-0.5 w-full h-1 text-[#FF6A00]/95 pointer-events-none" viewBox="0 0 100 10" preserveAspectRatio="none" fill="none">
+              <svg className="absolute left-0 -bottom-0.5 w-full h-1 text-[#10B981]/95 pointer-events-none" viewBox="0 0 100 10" preserveAspectRatio="none" fill="none">
                 <motion.path d="M 2 4 C 35 8, 65 3, 98 5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 1.1, duration: 0.5 }} />
               </svg>
             </span>{" "}
             operations, and create{" "}
             <span className="relative inline-block px-1 font-bold text-neutral-900">
               measurable
-              <svg className="absolute left-0 -bottom-0.5 w-full h-1 text-[#FF6A00]/95 pointer-events-none" viewBox="0 0 100 10" preserveAspectRatio="none" fill="none">
+              <svg className="absolute left-0 -bottom-0.5 w-full h-1 text-[#10B981]/95 pointer-events-none" viewBox="0 0 100 10" preserveAspectRatio="none" fill="none">
                 <motion.path d="M 3 5 Q 45 9, 97 3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 1.3, duration: 0.5 }} />
               </svg>
             </span>{" "}
@@ -220,7 +220,7 @@ export default function Hero({ onExploreWork, onAboutMe }: HeroProps) {
               onClick={onExploreWork}
               whileHover={{ scale: 1.03, y: -2 }}
               whileTap={{ scale: 0.98 }}
-              className="px-8 py-4 bg-[#FF6A00] text-white rounded-full font-sans font-bold text-[16px] flex items-center gap-2 shadow-[0_4px_18px_rgba(255,106,0,0.22)] hover:bg-[#e05d00] transition-all group cursor-pointer border border-[#FF6A00]"
+              className="px-8 py-4 bg-[#10B981] text-white rounded-full font-sans font-bold text-[16px] flex items-center gap-2 shadow-[0_4px_18px_rgba(16,185,129,0.22)] hover:bg-[#059669] transition-all group cursor-pointer border border-[#10B981]"
             >
               Explore My Work
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
@@ -311,7 +311,7 @@ export default function Hero({ onExploreWork, onAboutMe }: HeroProps) {
             </div>
 
             {/* "Design is thinking made visible." */}
-            <div className="absolute left-[36%] top-[34%] font-hand text-[19px] font-semibold text-[#FF6A00] rotate-[-3deg] tracking-wide pointer-events-none z-15">
+            <div className="absolute left-[36%] top-[34%] font-hand text-[19px] font-semibold text-[#10B981] rotate-[-3deg] tracking-wide pointer-events-none z-15">
               Design is thinking made visible.
             </div>
 
@@ -472,9 +472,9 @@ export default function Hero({ onExploreWork, onAboutMe }: HeroProps) {
                     <text x="91" y="83" textAnchor="middle" fontSize="5.5" fontWeight="black" fill="#86198F" className="font-sans">Success</text>
                   </svg>
                   
-                  {/* Connected orange PRODUCT SUCCESS badge */}
+                  {/* Connected green PRODUCT SUCCESS badge */}
                   <div className="absolute right-[-4px] top-[44%] transform translate-x-1/2 scale-90 sm:scale-100 z-10">
-                    <span className="bg-[#FF6A00] text-white font-sans text-[8px] font-bold px-2 py-0.5 rounded shadow-xs uppercase tracking-wider block">
+                    <span className="bg-[#10B981] text-white font-sans text-[8px] font-bold px-2 py-0.5 rounded shadow-xs uppercase tracking-wider block">
                       Product Success
                     </span>
                   </div>

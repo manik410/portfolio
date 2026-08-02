@@ -6,10 +6,11 @@ interface NavigationProps {
   onContactClick: () => void;
   onAboutClick: () => void;
   onWorkClick: () => void;
+  onHomeClick?: () => void;
   activePage?: "first-impression" | "about-me";
 }
 
-export default function Navigation({ onContactClick, onAboutClick, onWorkClick, activePage }: NavigationProps) {
+export default function Navigation({ onContactClick, onAboutClick, onWorkClick, onHomeClick, activePage }: NavigationProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -42,18 +43,23 @@ export default function Navigation({ onContactClick, onAboutClick, onWorkClick, 
       <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
         {/* Logo */}
         <a
-          href="#"
+          href="/"
+          aria-label="Home"
           onClick={(e) => {
             e.preventDefault();
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            setMobileMenuOpen(false);
+            if (onHomeClick) {
+              onHomeClick();
+            } else {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
           }}
-          className="group text-[22px] font-display font-black tracking-tight select-none text-[#1C1C1C]"
+          className="group flex items-center text-[22px] font-display font-black tracking-tight select-none text-[#1C1C1C] cursor-pointer"
           id="logo-brand"
         >
           <span className="font-display font-black">n</span>
-          <span className="text-[#FF6A00] font-display font-black">e</span>
+          <span className="text-[#10B981] font-display font-black">e</span>
           <span className="font-display font-black">ha</span>
-          <span className="text-neutral-300 font-normal ml-1 font-sans text-sm tracking-widest uppercase">.design</span>
         </a>
 
         {/* Center Navigation links - Desktop */}
@@ -61,44 +67,46 @@ export default function Navigation({ onContactClick, onAboutClick, onWorkClick, 
           <button
             onClick={() => scrollToSection("work-section", onWorkClick)}
             className={`font-display text-[15px] font-medium transition-colors relative group py-2 ${
-              activePage === "first-impression" ? "text-[#FF6A00]" : "text-[#1C1C1C]/75 hover:text-[#FF6A00]"
+              activePage === "first-impression" ? "text-[#10B981]" : "text-[#1C1C1C]/75 hover:text-[#10B981]"
             }`}
           >
             Work
-            <span className={`absolute bottom-0 left-0 h-[2px] bg-[#FF6A00] transition-all duration-300 ${
+            <span className={`absolute bottom-0 left-0 h-[2px] bg-[#10B981] transition-all duration-300 ${
               activePage === "first-impression" ? "w-full" : "w-0 group-hover:w-full"
             }`} />
           </button>
           <button
             onClick={() => scrollToSection("about-section", onAboutClick)}
             className={`font-display text-[15px] font-medium transition-colors relative group py-2 ${
-              activePage === "about-me" ? "text-[#FF6A00]" : "text-[#1C1C1C]/75 hover:text-[#FF6A00]"
+              activePage === "about-me" ? "text-[#10B981]" : "text-[#1C1C1C]/75 hover:text-[#10B981]"
             }`}
           >
             About
-            <span className={`absolute bottom-0 left-0 h-[2px] bg-[#FF6A00] transition-all duration-300 ${
+            <span className={`absolute bottom-0 left-0 h-[2px] bg-[#10B981] transition-all duration-300 ${
               activePage === "about-me" ? "w-full" : "w-0 group-hover:w-full"
             }`} />
           </button>
           <button
-            onClick={() => scrollToSection("resume-section")}
-            className="font-display text-[15px] font-medium text-[#1C1C1C]/75 hover:text-[#FF6A00] transition-colors relative group py-2"
+            onClick={() => scrollToSection("contact-section", onContactClick)}
+            className="font-display text-[15px] font-medium text-[#1C1C1C]/75 hover:text-[#10B981] transition-colors relative group py-2"
           >
-            Resume
-            <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#FF6A00] transition-all duration-300 group-hover:w-full" />
+            Let's Talk
+            <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#10B981] transition-all duration-300 group-hover:w-full" />
           </button>
         </nav>
 
         {/* Right CTA - Desktop */}
         <div className="hidden md:flex items-center" id="desktop-cta">
-          <motion.button
+          <motion.a
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => scrollToSection("contact-section", onContactClick)}
+            href="/resume.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
             className="bg-[#1C1C1C] text-white font-display text-[14px] font-semibold px-6 py-2.5 rounded-full hover:bg-neutral-800 transition-all shadow-sm flex items-center justify-center cursor-pointer tracking-tight"
           >
-            Let's Talk
-          </motion.button>
+            Resume
+          </motion.a>
         </div>
 
         {/* Mobile menu trigger */}
@@ -135,17 +143,20 @@ export default function Navigation({ onContactClick, onAboutClick, onWorkClick, 
             About
           </button>
           <button
-            onClick={() => scrollToSection("resume-section")}
-            className="font-display text-[16px] font-bold text-left text-[#1C1C1C]/80 py-2 border-b border-[#1C1C1C]/5"
-          >
-            Resume
-          </button>
-          <button
             onClick={() => scrollToSection("contact-section", onContactClick)}
-            className="bg-[#1C1C1C] text-white font-display text-[16px] font-bold px-6 py-3 rounded-full hover:bg-neutral-800 transition-colors shadow-md flex items-center justify-center cursor-pointer mt-2"
+            className="font-display text-[16px] font-bold text-left text-[#1C1C1C]/80 py-2 border-b border-[#1C1C1C]/5"
           >
             Let's Talk
           </button>
+          <a
+            href="/resume.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setMobileMenuOpen(false)}
+            className="bg-[#1C1C1C] text-white font-display text-[16px] font-bold px-6 py-3 rounded-full hover:bg-neutral-800 transition-colors shadow-md flex items-center justify-center cursor-pointer mt-2 block text-center"
+          >
+            Resume
+          </a>
         </motion.div>
       )}
     </header>

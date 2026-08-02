@@ -6,10 +6,12 @@ export interface Project {
   solution: string;
   impact: string;
   image: string;
+  video?: string;
   tags: string[];
   accentColor: string; // Tailwind class background color
   borderColor: string;
   textColor: string;
+  comingSoon?: boolean;
 }
 
 export interface TimelineItem {

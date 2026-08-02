@@ -121,17 +121,16 @@ export default function Contact() {
               </a>
 
               {/* Resume Download/Preview CTA */}
-              <button
+              <a
                 id="resume-section"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setShowResume(true);
-                }}
+                href="/resume.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2.5 px-6 py-3.5 bg-white border border-black/10 hover:border-black/25 text-black rounded-full font-display text-[14px] font-semibold shadow-2xs hover:shadow-xs transition-all tracking-tight cursor-pointer"
               >
                 <FileText className="w-4 h-4 text-accent-pink" />
                 <span>View Resume</span>
-              </button>
+              </a>
             </div>
 
           </div>
@@ -454,12 +453,22 @@ export default function Contact() {
                 {/* Footer Print/Download */}
                 <div className="border-t border-neutral-100 pt-8 mt-10 flex items-center justify-between text-neutral-400">
                   <p className="font-sans text-[11px]">&copy; Neha Sharma &bull; Confidential portfolio summary</p>
-                  <button
-                    onClick={() => window.print()}
-                    className="font-display text-[12px] font-bold text-neutral-700 hover:text-accent-orange transition-colors flex items-center gap-1 cursor-pointer"
-                  >
-                    Print Resume
-                  </button>
+                  <div className="flex items-center gap-4">
+                    <a
+                      href="/resume.pdf"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-display text-[12px] font-bold text-emerald-600 hover:text-emerald-700 transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      Open PDF Resume
+                    </a>
+                    <button
+                      onClick={() => window.print()}
+                      className="font-display text-[12px] font-bold text-neutral-700 hover:text-accent-orange transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      Print Resume
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>

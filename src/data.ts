@@ -9,6 +9,7 @@ export const projectsData: Project[] = [
     solution: "Designed a consolidated legal workspace featuring AI-assisted contract summaries, interactive timeline visualizers, and an automated invoice compliance checking module.",
     impact: "Cut average case life cycles by 40%, accelerated billing audits by 25%, and achieved a 92% user satisfaction score from corporate general counsels.",
     image: "/src/assets/images/legal_portfolio_mockup_1783335879310.jpg",
+    video: "/src/assets/images/legal_portfolio_demo.mp4",
     tags: ["Enterprise SaaS", "LegalTech", "Data Visualization", "AI Summary"],
     accentColor: "bg-accent-yellow",
     borderColor: "border-amber-300",
@@ -25,7 +26,8 @@ export const projectsData: Project[] = [
     tags: ["Enterprise SaaS", "Low-Code", "Interaction Design", "Workflow Builder"],
     accentColor: "bg-accent-orange",
     borderColor: "border-orange-300",
-    textColor: "text-orange-950"
+    textColor: "text-orange-950",
+    comingSoon: true
   },
   {
     id: "collection-recovery",
@@ -39,32 +41,6 @@ export const projectsData: Project[] = [
     accentColor: "bg-accent-pink",
     borderColor: "border-pink-300",
     textColor: "text-pink-950"
-  },
-  {
-    id: "communication-dashboard",
-    title: "Digital Communication Dashboard",
-    role: "Senior Product Designer",
-    problem: "High-volume customer support operations suffer from fragmented multi-channel feeds (SMS, WhatsApp, email) causing slow customer responses and high representative fatigue.",
-    solution: "Crafted a unified communication workspace that resolves overlapping customer identities into a single context-rich thread, supercharged by AI-powered auto-replies and draft generators.",
-    impact: "Improved first contact resolution by 30%, reduced handling times by 22%, and elevated the overall customer Net Promoter Score by 15 points.",
-    image: "/src/assets/images/comm_dashboard_1783261608398.jpg",
-    tags: ["Customer Support", "Omnichannel", "AI Assistants", "Dashboards"],
-    accentColor: "bg-accent-yellow",
-    borderColor: "border-amber-300",
-    textColor: "text-amber-950"
-  },
-  {
-    id: "ux-audit-analytics",
-    title: "Campaign Analytics",
-    role: "UX Strategy Lead",
-    problem: "While modern analytics products track raw clicks, they fail to highlight why users encounter friction, requiring manual, subjective heuristical analysis.",
-    solution: "Designed a behavioral analytics platform that automatically detects rage clicks, looping behaviors, and drop-off patterns, auto-generating prioritized friction reports with Figma-integration links.",
-    impact: "Accelerated UX audit cycles by 2.5x, helped client sites raise checkout conversions by an average of 14%, and bridged the gap between product managers and designers.",
-    image: "/src/assets/images/ux_analytics_1783261627388.jpg",
-    tags: ["Marketing Ops", "Product Growth", "Heuristics", "SaaS Analytics", "User Research"],
-    accentColor: "bg-accent-blue",
-    borderColor: "border-blue-300",
-    textColor: "text-blue-950"
   }
 ];
 

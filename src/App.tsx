@@ -45,6 +45,15 @@ export default function App() {
     }
   };
 
+  const handleHomeNav = () => {
+    if (currentPage !== "first-impression") {
+      setCurrentPage("first-impression");
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white selection:bg-accent-orange selection:text-white relative" id="portfolio-root">
       
@@ -53,6 +62,7 @@ export default function App() {
 
       {/* Top sticky blur navigation with dynamic page-aware click handlers */}
       <Navigation
+        onHomeClick={handleHomeNav}
         onWorkClick={handleWorkNav}
         onAboutClick={handleAboutNav}
         onContactClick={() => handleScrollTo("contact-section")}

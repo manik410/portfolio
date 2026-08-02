@@ -5,8 +5,9 @@ import {
   Layers, Search, Activity, Users, Clock, Cpu, 
   Settings, Sparkles, ChevronRight, Compass, 
   AlertTriangle, ArrowUpRight, FileText, Shield, X, Eye,
-  Briefcase, Monitor, Globe, Upload, Scale, TrendingUp, Building, Pin, Laptop, Database,
-  Download, Bell, Target, Lightbulb, ArrowRight, Filter, Quote
+  Briefcase, Monitor, Globe, Upload, Scale, TrendingUp, Building, Pin, Laptop, Database, Paperclip,
+  Download, Bell, Target, Lightbulb, ArrowRight, Filter, Quote, Zap, BarChart3, Columns, CheckSquare, History, ArrowDown,
+  Pause, Maximize2, Volume2, VolumeX, Video, RotateCcw, LayoutGrid, FileSpreadsheet
 } from "lucide-react";
 
 interface LegalPortfolioCaseStudyProps {
@@ -317,11 +318,80 @@ export default function LegalPortfolioCaseStudy({ onClose }: LegalPortfolioCaseS
   const [imageFailed, setImageFailed] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Video prototype demo states
-  const [videoFileUrl, setVideoFileUrl] = useState<string>("");
+  // Media prototype demo states
+  const [customMediaUrl, setCustomMediaUrl] = useState<string>("");
+  const [isMediaTypeVideo, setIsMediaTypeVideo] = useState<boolean>(false);
   const [activeImpactTab, setActiveImpactTab] = useState<"metrics" | "workflow" | "highlights">("metrics");
+  const [hoveredHeroCallout, setHoveredHeroCallout] = useState<number | null>(null);
+  const [activeDecisionId, setActiveDecisionId] = useState<number>(1);
+  const [activeSolutionTab, setActiveSolutionTab] = useState<number>(1);
+  const [isPlayingVideo, setIsPlayingVideo] = useState<boolean>(false);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Solution Section Real Video Player states & refs
+  const solutionVideoRef = useRef<HTMLVideoElement>(null);
+  const solutionVideoContainerRef = useRef<HTMLDivElement>(null);
+  const [videoCurrentTime, setVideoCurrentTime] = useState<number>(0);
+  const [videoDuration, setVideoDuration] = useState<number>(0);
+  const [isMuted, setIsMuted] = useState<boolean>(true);
+
+  const togglePlayVideo = () => {
+    if (solutionVideoRef.current) {
+      if (isPlayingVideo) {
+        solutionVideoRef.current.pause();
+        setIsPlayingVideo(false);
+      } else {
+        solutionVideoRef.current.play().then(() => {
+          setIsPlayingVideo(true);
+        }).catch((err) => {
+          console.log("Video play error:", err);
+        });
+      }
+    } else {
+      setIsPlayingVideo(!isPlayingVideo);
+    }
+  };
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const width = rect.width;
+    const targetDuration = videoDuration || (solutionVideoRef.current?.duration || 0);
+    if (targetDuration > 0) {
+      const newTime = (clickX / width) * targetDuration;
+      if (solutionVideoRef.current) {
+        solutionVideoRef.current.currentTime = newTime;
+        setVideoCurrentTime(newTime);
+      }
+    }
+  };
+
+  const toggleMute = () => {
+    if (solutionVideoRef.current) {
+      solutionVideoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    } else {
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (solutionVideoContainerRef.current) {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      } else {
+        solutionVideoContainerRef.current.requestFullscreen().catch(() => {});
+      }
+    }
+  };
+
+  const formatVideoTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -338,9 +408,10 @@ export default function LegalPortfolioCaseStudy({ onClose }: LegalPortfolioCaseS
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
       const file = files[0];
-      if (file.type.startsWith("video/")) {
+      if (file.type.startsWith("image/") || file.type.startsWith("video/")) {
         const url = URL.createObjectURL(file);
-        setVideoFileUrl(url);
+        setCustomMediaUrl(url);
+        setIsMediaTypeVideo(file.type.startsWith("video/"));
       }
     }
   };
@@ -349,9 +420,10 @@ export default function LegalPortfolioCaseStudy({ onClose }: LegalPortfolioCaseS
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
-      if (file.type.startsWith("video/")) {
+      if (file.type.startsWith("image/") || file.type.startsWith("video/")) {
         const url = URL.createObjectURL(file);
-        setVideoFileUrl(url);
+        setCustomMediaUrl(url);
+        setIsMediaTypeVideo(file.type.startsWith("video/"));
       }
     }
   };
@@ -360,12 +432,11 @@ export default function LegalPortfolioCaseStudy({ onClose }: LegalPortfolioCaseS
     { id: "hero", label: "01 / Hero" },
     { id: "overview", label: "02 / Product Overview" },
     { id: "problem-statement", label: "03 / Problem Statement" },
-    { id: "ecosystem", label: "04 / Ecosystem" },
-    { id: "challenge", label: "05 / Business Challenge" },
-    { id: "goals", label: "06 / Business Goals" },
-    { id: "research", label: "07 / Research" },
-    { id: "solution", label: "08 / The Solution" },
-    { id: "impact-next", label: "09 / Impact & What's Next" }
+    { id: "challenge", label: "04 / Business Challenge" },
+    { id: "solution", label: "05 / Design Decisions" },
+    { id: "walkthrough", label: "06 / Product Walkthrough" },
+    { id: "impact", label: "07 / Impact" },
+    { id: "whats-next", label: "08 / What's Next" }
   ];
 
   // Set up intersection observer to highlight sidebar on scroll
@@ -490,7 +561,7 @@ export default function LegalPortfolioCaseStudy({ onClose }: LegalPortfolioCaseS
               {/* Handwritten small arrow annotation */}
               <div className="absolute right-4 bottom-0 rotate-[4deg] hidden xl:block pointer-events-none select-none">
                 <span className="font-hand text-[22px] text-emerald-600 font-bold block mb-1">
-                  1st Place Hackathon winner! 🏆
+                  Recent Project ✦
                 </span>
                 <svg className="w-12 h-6 text-emerald-400 ml-4" viewBox="0 0 50 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <path d="M 5 15 Q 25 5, 45 10" />
@@ -571,29 +642,32 @@ export default function LegalPortfolioCaseStudy({ onClose }: LegalPortfolioCaseS
                     </div>
 
                     {/* Display Screen */}
-                    <div className="w-full h-full relative bg-neutral-950 flex items-center justify-center select-none group/screen">
+                    <div className="w-full h-full relative bg-neutral-950 flex items-center justify-center select-none group/screen overflow-hidden">
                       
-                      {/* Video Player */}
-                      <video
-                        src={videoFileUrl || "/src/assets/images/legal_portfolio_video.mp4"}
-                        poster="/src/assets/images/legal_portfolio_mockup_1783335879310.jpg"
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        className="w-full h-full object-cover z-0"
-                        onError={(e) => {
-                          // Fallback source if default files are missing
-                          console.log("Using poster fallback as video files are not yet present.");
-                        }}
-                      />
+                      {/* High-Fidelity UI Image */}
+                      {isMediaTypeVideo && customMediaUrl ? (
+                        <video
+                          src={customMediaUrl}
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          className="w-full h-full object-cover z-0"
+                        />
+                      ) : (
+                        <img
+                          src={customMediaUrl || "/src/assets/images/legal_portfolio_mockup_1783335879310.jpg"}
+                          alt="Legal Portfolio High-Fidelity Enterprise Dashboard Interface"
+                          className="w-full h-full object-cover object-top z-0 transition-transform duration-500 group-hover/screen:scale-[1.01]"
+                        />
+                      )}
 
                       {/* Hover Interaction Overlay */}
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/screen:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white p-4 z-20">
                         <Upload className="w-10 h-10 mb-3 text-emerald-400 stroke-[1.5] animate-bounce" />
-                        <h4 className="font-serif text-lg font-bold mb-1 tracking-tight">Drag & Drop Your Recording</h4>
+                        <h4 className="font-serif text-lg font-bold mb-1 tracking-tight">Upload Custom UI Screenshot</h4>
                         <p className="text-xs text-neutral-300 text-center max-w-xs font-light mb-4">
-                          Drop any local <code className="bg-white/15 px-1 rounded font-mono text-[10px]">.mp4</code> prototype video to instantly view it live in the mockup
+                          Drop any local image or screenshot to instantly preview it live inside the laptop frame
                         </p>
                         
                         <button
@@ -601,14 +675,15 @@ export default function LegalPortfolioCaseStudy({ onClose }: LegalPortfolioCaseS
                           className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-md flex items-center gap-1.5 hover:scale-105 active:scale-95 cursor-pointer"
                         >
                           <Upload className="w-3.5 h-3.5" />
-                          Choose Video File
+                          Choose Image File
                         </button>
                       </div>
 
-                      {/* Active Video Status indicator when custom video is uploaded */}
-                      {videoFileUrl && (
-                        <div className="absolute bottom-3 left-3 bg-black/75 backdrop-blur-md border border-white/10 px-2 py-1 rounded text-[9px] font-mono text-emerald-400 font-bold z-20 flex items-center gap-1.5 animate-pulse">
-                          <span>● PLAYING CUSTOM PROTOTYPE</span>
+                      {/* Active Custom Media Indicator when uploaded */}
+                      {customMediaUrl && (
+                        <div className="absolute bottom-3 left-3 bg-black/80 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-md text-[9px] font-mono text-emerald-400 font-bold z-20 flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
+                          <span>DISPLAYING CUSTOM SCREENSHOT</span>
                         </div>
                       )}
                     </div>
@@ -629,12 +704,12 @@ export default function LegalPortfolioCaseStudy({ onClose }: LegalPortfolioCaseS
                   type="file"
                   ref={fileInputRef}
                   onChange={handleFileChange}
-                  accept="video/*"
+                  accept="image/*,video/*"
                   className="hidden"
                 />
 
                 <p className="text-[10px] text-neutral-500 font-mono text-center mt-6 uppercase tracking-wider">
-                  * HTML5 High-Fidelity Autoplay & Loop Engine • Supported format: H.264 MP4
+                  * High-Fidelity Enterprise System Interface • Drag & drop any screenshot to customize preview
                 </p>
               </div>
             </div>
@@ -709,20 +784,23 @@ export default function LegalPortfolioCaseStudy({ onClose }: LegalPortfolioCaseS
                 <div className="mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200/40 pb-6">
                   <div className="flex items-center gap-3">
                     <span className="font-mono text-[10px] font-extrabold uppercase text-[#10B981] bg-[#10B981]/8 border border-[#10B981]/15 px-3 py-1.5 rounded-md tracking-[0.2em] inline-block shadow-3xs">
-                      02 / PROJECT SPECIFICATION
+                      02 / PRODUCT OVERVIEW
                     </span>
-                    <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider hidden sm:inline-block">• DEPLOYMENT REPORT</span>
+                    <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider hidden sm:inline-block">• ENTERPRISE SYSTEM SPECIFICATION</span>
                   </div>
                 </div>
 
                 {/* Main Overview Content */}
                 <div className="max-w-4xl mx-auto space-y-6 mb-14 mt-6">
+                  <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-neutral-950 tracking-tight block mb-3">
+                    What is Legal Portfolio Management?
+                  </h2>
                   <p className="font-serif text-xl sm:text-2xl text-neutral-900 font-medium leading-relaxed tracking-tight relative pl-4 sm:pl-6">
                     <span className="absolute left-0 top-1 bottom-1 w-[3px] bg-[#10B981] rounded-full" />
-                    Legal Portfolio Management is a high-volume <strong className="text-neutral-950 font-black underline decoration-[#10B981]/40 decoration-2 underline-offset-4">Case Management System</strong> built for modern litigation operations.
+                    Legal Portfolio Management is an enterprise <strong className="text-neutral-950 font-black underline decoration-[#10B981]/40 decoration-2 underline-offset-4">Case Management System</strong> used by banks, NBFCs, and financial institutions to manage thousands of litigation cases across the recovery lifecycle.
                   </p>
-                  <p className="font-sans text-sm sm:text-base text-neutral-500 font-normal leading-relaxed">
-                    As the platform scaled, legacy tools left users drowning in tabs, disjointed spreadsheets, and complex courtroom schedules. The redesigned unified portal harmonizes <strong className="text-neutral-900 font-semibold">Portfolio Intelligence</strong>, dynamic <strong className="text-neutral-900 font-semibold">Workflow Automation</strong>, and unalterable <strong className="text-neutral-900 font-semibold">Audit Records</strong> into a singular high-performance cockpit.
+                  <p className="font-sans text-sm sm:text-base text-neutral-600 font-normal leading-relaxed">
+                    It brings together <strong className="text-neutral-900 font-semibold">portfolio tracking</strong>, <strong className="text-neutral-900 font-semibold">legal workflows</strong>, <strong className="text-neutral-900 font-semibold">case history</strong>, <strong className="text-neutral-900 font-semibold">compliance records</strong>, <strong className="text-neutral-900 font-semibold">document management</strong>, and <strong className="text-neutral-900 font-semibold">recovery operations</strong> into one centralized platform.
                   </p>
                 </div>
 
@@ -864,590 +942,302 @@ export default function LegalPortfolioCaseStudy({ onClose }: LegalPortfolioCaseS
           </section>
 
           {/* ====================================================
-              04. ECOSYSTEM SECTION (Hanging Clipboards Style)
-              ==================================================== */}
-          <section id="ecosystem" className="scroll-mt-28 text-left border-b border-[#141414]/5 pb-16">
-            <span className="font-mono text-[9px] font-extrabold uppercase text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded tracking-widest inline-block mb-4">
-              04 / ECOSYSTEM
-            </span>
-            <h2 className="font-serif text-3xl sm:text-4xl font-black text-neutral-900 tracking-tight leading-tight mb-4">
-              Enterprise Legal Operations
-            </h2>
-            <p className="text-neutral-500 font-light leading-relaxed mb-8 text-xs sm:text-sm">
-              Litigation portfolio management requires careful orchestration across internal teams and external agency partners. Below are our key user profiles and their ecosystem connections.
-            </p>
-
-            {/* Design Reference Inspired Board Wrapper */}
-            <div className="relative overflow-visible mt-12 py-6">
-              {/* Title from Reference style */}
-              <div className="text-center mb-14 relative z-10">
-                <h3 className="font-mono text-xs sm:text-sm font-black text-[#854d0e] uppercase tracking-[0.25em]">
-                  Understanding Our Legal Users
-                </h3>
-              </div>
-
-              {/* Clipboard Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-6 relative z-20" id="ecosystem-users">
-                
-                {/* CARD 1: Recovery Managers */}
-                <div className="relative bg-[#FCFAF5] border border-neutral-300/80 rounded-2xl p-6 pt-12 pb-8 shadow-md hover:shadow-lg hover:border-neutral-400 transition-all duration-300 flex flex-col justify-between h-full group">
-                  {/* Metal Clipboard Clip */}
-                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-[45%] z-20 pointer-events-none flex flex-col items-center">
-                    {/* Ring / Hook */}
-                    <div className="w-5 h-5 rounded-full border-2 border-neutral-400 bg-[#FAF9F5] -mb-1 shadow-2xs" />
-                    {/* Metallic Clamp */}
-                    <div className="w-14 h-7 bg-gradient-to-b from-neutral-200 via-neutral-300 to-neutral-400 border border-neutral-450 rounded shadow-sm relative flex items-center justify-center">
-                      <div className="w-8 h-1 bg-neutral-500/30 rounded-full" />
-                    </div>
-                  </div>
-
-                  <div>
-                    {/* Title & Age */}
-                    <div className="text-center mb-6">
-                      <h4 className="font-serif italic text-2xl text-[#A65E32] font-semibold tracking-wide leading-tight">
-                        Recovery Managers
-                      </h4>
-                      <span className="font-mono text-[9px] text-neutral-500 tracking-wider uppercase block mt-1">
-                        ROLE TYPE: PORTFOLIO
-                      </span>
-                    </div>
-
-                    {/* Behaviour Markers equivalent: Operational Focus */}
-                    <div className="space-y-4 mb-6">
-                      <div>
-                        <span className="font-mono text-[9px] font-extrabold text-neutral-400 uppercase tracking-widest block mb-2">
-                          OPERATIONAL FOCUS
-                        </span>
-                        <ul className="space-y-2 text-xs text-neutral-700 font-light leading-relaxed">
-                          <li className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 mt-1.5 shrink-0" />
-                            <span>Monitors overall portfolio health and agency recovery trends.</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 mt-1.5 shrink-0" />
-                            <span>Identifies systemic bottlenecks in real-time recovery pipelines.</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 mt-1.5 shrink-0" />
-                            <span>Reviews monthly SLA reports and agency performance metrics.</span>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-
-                    {/* Pain Points equivalent */}
-                    <div className="border-t border-neutral-200/80 pt-4 mb-6">
-                      <span className="font-mono text-[9px] font-extrabold text-neutral-400 uppercase tracking-widest block mb-2">
-                        PAIN POINTS
-                      </span>
-                      <p className="text-xs text-neutral-600 font-light leading-relaxed">
-                        Struggles with fragmented manual reports, stale tracker exports, and delayed multi-agency feedback loops.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Quote at the bottom */}
-                  <div className="border-t border-neutral-200/80 pt-4 mt-auto">
-                    <p className="text-xs text-neutral-600 italic font-light leading-relaxed text-center group-hover:text-neutral-800 transition-colors">
-                      "I need to see immediate bottleneck spots across our entire multi-agency recovery portfolio without digging into spreadsheets."
-                    </p>
-                  </div>
-                </div>
-
-                {/* CARD 2: Legal Managers */}
-                <div className="relative bg-[#FCFAF5] border border-neutral-300/80 rounded-2xl p-6 pt-12 pb-8 shadow-md hover:shadow-lg hover:border-neutral-400 transition-all duration-300 flex flex-col justify-between h-full group">
-                  {/* Metal Clipboard Clip */}
-                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-[45%] z-20 pointer-events-none flex flex-col items-center">
-                    {/* Ring / Hook */}
-                    <div className="w-5 h-5 rounded-full border-2 border-neutral-400 bg-[#FAF9F5] -mb-1 shadow-2xs" />
-                    {/* Metallic Clamp */}
-                    <div className="w-14 h-7 bg-gradient-to-b from-neutral-200 via-neutral-300 to-neutral-400 border border-neutral-450 rounded shadow-sm relative flex items-center justify-center">
-                      <div className="w-8 h-1 bg-neutral-500/30 rounded-full" />
-                    </div>
-                  </div>
-
-                  <div>
-                    {/* Title & Age */}
-                    <div className="text-center mb-6">
-                      <h4 className="font-serif italic text-2xl text-[#A34A4A] font-semibold tracking-wide leading-tight">
-                        Legal Managers
-                      </h4>
-                      <span className="font-mono text-[9px] text-neutral-500 tracking-wider uppercase block mt-1">
-                        ROLE TYPE: COMPLIANCE
-                      </span>
-                    </div>
-
-                    {/* Operational Focus */}
-                    <div className="space-y-4 mb-6">
-                      <div>
-                        <span className="font-mono text-[9px] font-extrabold text-neutral-400 uppercase tracking-widest block mb-2">
-                          OPERATIONAL FOCUS
-                        </span>
-                        <ul className="space-y-2 text-xs text-neutral-700 font-light leading-relaxed">
-                          <li className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 mt-1.5 shrink-0" />
-                            <span>Tracks critical court calendars and legal notice deadlines.</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 mt-1.5 shrink-0" />
-                            <span>Conducts compliance audits for strict regulatory alignment.</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 mt-1.5 shrink-0" />
-                            <span>Monitors advocate courtroom performance and document filings.</span>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-
-                    {/* Pain Points */}
-                    <div className="border-t border-neutral-200/80 pt-4 mb-6">
-                      <span className="font-mono text-[9px] font-extrabold text-neutral-400 uppercase tracking-widest block mb-2">
-                        PAIN POINTS
-                      </span>
-                      <p className="text-xs text-neutral-600 font-light leading-relaxed">
-                        Risk of missed hearings, delayed legal notices, or timeline breaches due to lack of consolidated court schedules.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Quote at the bottom */}
-                  <div className="border-t border-neutral-200/80 pt-4 mt-auto">
-                    <p className="text-xs text-neutral-600 italic font-light leading-relaxed text-center group-hover:text-neutral-800 transition-colors">
-                      "Regulatory alignment is non-negotiable. I need instant visibility on filing deadlines to prevent compliance failures."
-                    </p>
-                  </div>
-                </div>
-
-                {/* CARD 3: Operations Teams */}
-                <div className="relative bg-[#FCFAF5] border border-neutral-300/80 rounded-2xl p-6 pt-12 pb-8 shadow-md hover:shadow-lg hover:border-neutral-400 transition-all duration-300 flex flex-col justify-between h-full group">
-                  {/* Metal Clipboard Clip */}
-                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-[45%] z-20 pointer-events-none flex flex-col items-center">
-                    {/* Ring / Hook */}
-                    <div className="w-5 h-5 rounded-full border-2 border-neutral-400 bg-[#FAF9F5] -mb-1 shadow-2xs" />
-                    {/* Metallic Clamp */}
-                    <div className="w-14 h-7 bg-gradient-to-b from-neutral-200 via-neutral-300 to-neutral-400 border border-neutral-450 rounded shadow-sm relative flex items-center justify-center">
-                      <div className="w-8 h-1 bg-neutral-500/30 rounded-full" />
-                    </div>
-                  </div>
-
-                  <div>
-                    {/* Title & Age */}
-                    <div className="text-center mb-6">
-                      <h4 className="font-serif italic text-2xl text-[#4F7A54] font-semibold tracking-wide leading-tight">
-                        Operations Teams
-                      </h4>
-                      <span className="font-mono text-[9px] text-neutral-500 tracking-wider uppercase block mt-1">
-                        ROLE TYPE: EXECUTION
-                      </span>
-                    </div>
-
-                    {/* Operational Focus */}
-                    <div className="space-y-4 mb-6">
-                      <div>
-                        <span className="font-mono text-[9px] font-extrabold text-neutral-400 uppercase tracking-widest block mb-2">
-                          OPERATIONAL FOCUS
-                        </span>
-                        <ul className="space-y-2 text-xs text-neutral-700 font-light leading-relaxed">
-                          <li className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 mt-1.5 shrink-0" />
-                            <span>Processes daily bulk data uploads and system overrides.</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 mt-1.5 shrink-0" />
-                            <span>Dispatches court notices and updates case status feeds.</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 mt-1.5 shrink-0" />
-                            <span>Coordinates physical and digital files with external advocates.</span>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-
-                    {/* Pain Points */}
-                    <div className="border-t border-neutral-200/80 pt-4 mb-6">
-                      <span className="font-mono text-[9px] font-extrabold text-neutral-400 uppercase tracking-widest block mb-2">
-                        PAIN POINTS
-                      </span>
-                      <p className="text-xs text-neutral-600 font-light leading-relaxed">
-                        Extremely high cognitive load from repetitive data entry, multiple system screens, and slow copy-paste tasks.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Quote at the bottom */}
-                  <div className="border-t border-neutral-200/80 pt-4 mt-auto">
-                    <p className="text-xs text-neutral-600 italic font-light leading-relaxed text-center group-hover:text-neutral-800 transition-colors">
-                      "I execute hundreds of case updates daily. Any reduction in repetitive actions directly increases our throughput."
-                    </p>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </section>
-
-          {/* ====================================================
-              05. BUSINESS CHALLENGE SECTION
+              04. BUSINESS CHALLENGE SECTION
               ==================================================== */}
           <section id="challenge" className="scroll-mt-28 text-left border-b border-[#141414]/5 pb-16">
-            <span className="font-mono text-[9px] font-extrabold uppercase text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded tracking-widest inline-block mb-4">
-              05 / Business Challenge
+            <span className="font-mono text-[9px] font-bold uppercase text-amber-800 bg-amber-50/80 border border-amber-200/80 px-2.5 py-1 rounded tracking-widest inline-block mb-4">
+              04 / BUSINESS CHALLENGE
             </span>
-            <h2 className="font-serif text-3xl sm:text-4xl font-black text-neutral-900 tracking-tight leading-tight mb-4">
+            
+            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-neutral-900 tracking-tight leading-tight mb-4">
               The Business Challenge
             </h2>
-            <div className="space-y-3 mb-8">
-              <p className="text-neutral-500 font-light leading-relaxed text-xs sm:text-sm max-w-3xl">
-                As litigation portfolios grew, legal teams struggled to access, interpret, and act on case data efficiently — even though the information already existed in the platform.
-              </p>
-              <p className="font-medium text-neutral-800 text-xs sm:text-sm">
-                Legal teams spent a significant portion of their day:
-              </p>
-            </div>
 
-            {/* Challenges list (6 cards with custom styled icons) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" id="business-challenges-cards">
+            <p className="text-neutral-600 font-normal leading-relaxed text-sm sm:text-base max-w-3xl mb-8">
+              As litigation portfolios grew, legal teams struggled to access, interpret, and act on case data efficiently — even though all information already existed within the platform.
+            </p>
+
+            {/* Challenges 4-Card Grid (Unified, Clean Visual Style) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10" id="business-challenges-cards">
               {[
                 { 
-                  title: "Exporting reports", 
-                  desc: "Manually exporting spreadsheets for status updates", 
-                  icon: <Download className="w-4 h-4" /> 
+                  title: "Manual CSV Exports", 
+                  desc: "Daily spreadsheet exports required just to check case updates and verify statuses.", 
+                  impact: "High Manual Overhead",
+                  icon: Download
                 },
                 { 
-                  title: "Searching for individual cases", 
-                  desc: "No smart search across unstructured case data", 
-                  icon: <Search className="w-4 h-4" /> 
+                  title: "No Global Search", 
+                  desc: "Digging manually through static, multi-page lists to locate specific case files.", 
+                  impact: "Search Friction",
+                  icon: Search
                 },
                 { 
-                  title: "Opening multiple screens", 
-                  desc: "Multiple tabs just to compare basic context", 
-                  icon: <Layers className="w-4 h-4" /> 
+                  title: "Untracked Inactive Cases", 
+                  desc: "No automated alerts, causing stalled cases to linger undetected.", 
+                  impact: "Operational Blind Spots",
+                  icon: AlertCircle
                 },
                 { 
-                  title: "Tracking overdue activities", 
-                  desc: "Manually calculating SLA deadlines on paper", 
-                  icon: <Clock className="w-4 h-4" /> 
-                },
-                { 
-                  title: "Identifying inactive cases", 
-                  desc: "No alerts for stalled or inactive cases", 
-                  icon: <AlertCircle className="w-4 h-4" /> 
-                },
-                { 
-                  title: "Following up on hearings", 
-                  desc: "Manually tracking court dates, no reminders", 
-                  icon: <Bell className="w-4 h-4" /> 
+                  title: "Manual Hearing Logs", 
+                  desc: "Relying on memory and notebook notes without automated reminder alerts.", 
+                  impact: "Memory Dependency",
+                  icon: Bell
                 }
               ].map((c, idx) => {
-                const isChit = idx === 0;
+                const CardIcon = c.icon;
                 return (
                   <div 
                     key={idx} 
-                    className={`p-5 rounded-xl transition-all duration-300 flex items-start gap-3 relative ${
-                      isChit 
-                        ? "bg-[#FFFCE3] border-l-4 border-l-amber-400 border-t border-r border-b border-amber-200/50 shadow-md rotate-[-1.5deg] hover:rotate-0 hover:scale-[1.03] hover:shadow-lg hover:z-10" 
-                        : "border border-[#141414]/10 bg-neutral-50/50 shadow-2xs hover:shadow-xs"
-                    }`}
+                    className="p-4 bg-white border border-neutral-200/80 rounded-xl transition-all duration-200 hover:border-neutral-300 shadow-2xs flex flex-col justify-between"
                   >
-                    {/* Visual Tape Effect at the top for the Chit note */}
-                    {isChit && (
-                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-14 h-4.5 bg-amber-100/50 backdrop-blur-[1px] border border-amber-200/40 shadow-2xs rotate-[2deg] pointer-events-none opacity-80" />
-                    )}
-                    
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                      isChit 
-                        ? "bg-amber-100/70 border border-amber-200/60 text-amber-700" 
-                        : "bg-emerald-50 border border-emerald-100 text-emerald-600"
-                    }`}>
-                      {c.icon}
-                    </div>
-                    
-                    <div className="w-full">
-                      <h4 className={`font-bold text-xs mb-1 ${isChit ? "text-amber-950 font-serif" : "text-neutral-900"}`}>{c.title}</h4>
-                      <p className={`text-[11px] font-light leading-snug ${isChit ? "text-amber-900/80 font-mono" : "text-neutral-500"}`}>
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="p-2 rounded-lg bg-neutral-50 border border-neutral-200/60 text-neutral-700">
+                          <CardIcon className="w-4 h-4" />
+                        </div>
+                        <span className="font-mono text-[10px] text-neutral-400 font-medium">
+                          0{idx + 1}
+                        </span>
+                      </div>
+
+                      <h3 className="font-sans text-sm font-semibold text-neutral-900 mb-1.5">
+                        {c.title}
+                      </h3>
+
+                      <p className="text-xs text-neutral-600 font-normal leading-relaxed mb-4">
                         {c.desc}
                       </p>
+                    </div>
+
+                    <div className="pt-2.5 border-t border-neutral-100 flex items-center justify-between">
+                      <span className="text-[9px] font-mono text-neutral-400 uppercase tracking-wider">FRICTION</span>
+                      <span className="font-mono text-[10px] text-neutral-700 bg-neutral-100/80 border border-neutral-200/70 px-2 py-0.5 rounded font-medium">
+                        {c.impact}
+                      </span>
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            <p className="text-base sm:text-lg text-neutral-700 leading-relaxed font-light border-l-2 border-emerald-500/30 pl-4 max-w-3xl italic mb-10">
-              The product provided data, but it didn't help users make decisions.
-            </p>
-
-            {/* Old UI Screenshot Blueprint Placeholder */}
-            <div className="bg-neutral-100 border border-neutral-200 rounded-xl p-4 text-center relative overflow-hidden group shadow-2xs" id="old-ui-frame">
-              <span className="absolute top-2 left-2 font-mono text-[7px] text-neutral-400 uppercase">[ EXISTING EXPERIENCE ]</span>
-              
-              <div className="p-4 bg-white border border-neutral-200 rounded-xl text-left max-w-4xl mx-auto my-6 shadow-xs">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-100 pb-3 mb-4">
-                  <div className="font-mono text-[10px] text-red-700 bg-red-100/50 border border-red-200/50 px-2.5 py-1 rounded inline-block">
-                    ❌ Legacy ERP System (Cluttered & Reactive)
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-neutral-400">View Mode:</span>
-                    <button
-                      onClick={() => setImageFailed(false)}
-                      className={`px-2 py-0.5 rounded text-[9px] font-mono border transition-all cursor-pointer ${
-                        !imageFailed 
-                          ? "bg-neutral-800 border-neutral-900 text-white font-bold" 
-                          : "bg-neutral-50 border-neutral-200 text-neutral-500 hover:bg-neutral-100"
-                      }`}
-                    >
-                      Image File
-                    </button>
-                    <button
-                      onClick={() => setImageFailed(true)}
-                      className={`px-2 py-0.5 rounded text-[9px] font-mono border transition-all cursor-pointer ${
-                        imageFailed 
-                          ? "bg-neutral-800 border-neutral-900 text-white font-bold" 
-                          : "bg-neutral-50 border-neutral-200 text-neutral-500 hover:bg-neutral-100"
-                      }`}
-                    >
-                      High-Fi Mockup
-                    </button>
-                  </div>
-                </div>
-                
-                {!imageFailed ? (
-                  /* Real Image of Old UI Screenshot */
-                  <div className="relative overflow-hidden rounded-lg border border-neutral-200/60 bg-neutral-50 shadow-2xs mb-3">
-                    <img 
-                      src={oldUiSrc} 
-                      onError={() => {
-                        if (oldUiSrc === "/src/assets/images/old.png") {
-                          setOldUiSrc("/old.png");
-                        } else if (oldUiSrc === "/old.png") {
-                          setOldUiSrc("/assets/old.png");
-                        } else {
-                          setImageFailed(true);
-                        }
-                      }}
-                      alt="Legacy ERP System (Legal Portfolio Beta)" 
-                      className="w-full h-auto object-cover max-h-[480px]"
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
-                ) : (
-                  /* High-Fidelity Pixel-Perfect CSS Reconstruction of user's uploaded old.png */
-                  <div className="relative overflow-hidden rounded-lg border border-neutral-200/80 bg-slate-50 font-sans shadow-2xs mb-3 select-none">
-                    {/* Header breadcrumb */}
-                    <div className="bg-[#FAFBFD] border-b border-slate-200/70 px-4 py-2 flex items-center gap-1.5 text-[10px] text-slate-400 font-medium font-sans">
-                      <Briefcase className="w-3 h-3 text-slate-400" />
-                      <span>testing</span>
-                      <span>/</span>
-                      <span>Legal</span>
-                      <span>/</span>
-                      <span className="text-slate-500">Legal Portfolio</span>
-                    </div>
-
-                    {/* App Title & Tabs */}
-                    <div className="bg-white border-b border-slate-200/70 px-4 pt-3.5 flex flex-col gap-3">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-[#002B49] text-base font-bold tracking-tight">Legal Portfolio Beta</h3>
-                        <div className="flex gap-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-                          <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-                        </div>
-                      </div>
-                      
-                      {/* Active Tab */}
-                      <div className="flex">
-                        <div className="border-b-2 border-blue-600 px-3 pb-1 text-[10px] font-bold text-blue-600 uppercase tracking-wider">
-                          Case View
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Filter & Search Bar */}
-                    <div className="p-3 bg-white border-b border-slate-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 max-w-md w-full">
-                        {/* Selector dropdown */}
-                        <div className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-[11px] font-medium text-slate-700 flex items-center gap-1.5 shrink-0 select-none">
-                          <span>Loan ID</span>
-                          <span className="text-slate-400 text-[8px]">▼</span>
-                        </div>
-                        {/* Search input field */}
-                        <div className="border border-slate-300 rounded-lg px-3 py-1.5 bg-white text-[11px] text-slate-400 flex items-center justify-between w-full select-none">
-                          <span>Search...</span>
-                          <Search className="w-3 h-3 text-slate-400" />
-                        </div>
-                      </div>
-
-                      {/* Right Filter Actions */}
-                      <div className="flex items-center gap-2 self-end sm:self-auto">
-                        {/* Date Picker */}
-                        <div className="border border-slate-300 rounded-lg px-2.5 py-1 bg-white relative text-right min-w-[180px] select-none">
-                          <span className="absolute -top-1.5 right-2 bg-white px-1 text-[8px] text-slate-400 font-mono scale-90">Case Updated Date</span>
-                          <div className="flex items-center justify-between gap-1.5 text-[10px] font-medium text-slate-700 mt-1">
-                            <span>02 Feb 2026 - 16 Feb 2026</span>
-                            <span className="text-slate-400">📅</span>
-                          </div>
-                        </div>
-                        
-                        {/* Action Icons */}
-                        <div className="w-7 h-7 rounded-lg border border-slate-300 bg-white flex items-center justify-center text-slate-500 cursor-pointer hover:bg-slate-50">
-                          <span className="text-xs">▼</span>
-                        </div>
-                        <div className="w-7 h-7 rounded-lg border border-slate-300 bg-white flex items-center justify-center text-slate-500 cursor-pointer hover:bg-slate-50">
-                          <span className="text-xs">≡</span>
-                        </div>
-                        
-                        {/* Filter active badge */}
-                        <div className="w-7 h-7 rounded-lg border border-slate-300 bg-blue-50 flex items-center justify-center text-blue-600 relative cursor-pointer hover:bg-blue-100">
-                          <span className="text-xs">⏳</span>
-                          <div className="absolute -top-1 -right-1 bg-blue-600 text-white rounded-full text-[7px] w-3.5 h-3.5 flex items-center justify-center font-bold">1</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Dense Table View */}
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse text-[10px] text-slate-700 bg-white">
-                        <thead>
-                          <tr className="bg-[#FAFBFD] border-b border-slate-200/70 text-slate-500 font-semibold uppercase tracking-wider select-none">
-                            <th className="px-3 py-2 border-r border-slate-200/50">Loan ID/ Applicant Name</th>
-                            <th className="px-3 py-2 border-r border-slate-200/50">Case Id</th>
-                            <th className="px-3 py-2 border-r border-slate-200/50">Matter Type</th>
-                            <th className="px-3 py-2 border-r border-slate-200/50">Proceeding</th>
-                            <th className="px-3 py-2 border-r border-slate-200/50">Current Step</th>
-                            <th className="px-3 py-2 border-r border-slate-200/50">Filing Date</th>
-                            <th className="px-3 py-2 border-r border-slate-200/50">Last Hearing Date</th>
-                            <th className="px-3 py-2 border-r border-slate-200/50">Next Hearing Date</th>
-                            <th className="px-3 py-2">Case Update</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {/* Row 1 */}
-                          <tr className="hover:bg-slate-50/50">
-                            <td className="px-3 py-3 border-r border-slate-200/40 font-mono font-medium">
-                              keda1772 <span className="text-slate-400 block font-sans text-[8px]">()</span>
-                            </td>
-                            <td className="px-3 py-3 border-r border-slate-200/40 font-mono font-bold text-blue-600 underline cursor-pointer">
-                              08U7Y
-                            </td>
-                            <td className="px-3 py-3 border-r border-slate-200/40">Criminal Proceeding</td>
-                            <td className="px-3 py-3 border-r border-slate-200/40">Cheque Bounce u/s 138 (NI...)</td>
-                            <td className="px-3 py-3 border-r border-slate-200/40 font-mono text-slate-500">104 - Cases Dispatch</td>
-                            <td className="px-3 py-3 border-r border-slate-200/40 text-slate-500 font-mono">Feb 02, 2022</td>
-                            <td className="px-3 py-3 border-r border-slate-200/40 text-slate-500 font-mono">Feb 04, 2026</td>
-                            <td className="px-3 py-3 border-r border-slate-200/40 text-slate-500 font-mono">Mar 28, 2022</td>
-                            <td className="px-3 py-3 text-slate-500 font-mono">Feb 05, 2026</td>
-                          </tr>
-                          
-                          {/* Row 2 */}
-                          <tr className="hover:bg-slate-50/50">
-                            <td className="px-3 py-3 border-r border-slate-200/40 font-mono font-medium text-slate-400">
-                              ()
-                            </td>
-                            <td className="px-3 py-3 border-r border-slate-200/40 font-mono font-bold text-blue-600 underline cursor-pointer">
-                              KIM
-                            </td>
-                            <td className="px-3 py-3 border-r border-slate-200/40">Criminal Proceeding</td>
-                            <td className="px-3 py-3 border-r border-slate-200/40">Cheque Bounce u/s 138 (NI...)</td>
-                            <td className="px-3 py-3 border-r border-slate-200/40 font-mono text-slate-500">104 - Cases Dispatch</td>
-                            <td className="px-3 py-3 border-r border-slate-200/40 text-slate-500 font-mono">Sep 08, 2021</td>
-                            <td className="px-3 py-3 border-r border-slate-200/40 text-slate-500 font-mono">Feb 06, 2026</td>
-                            <td className="px-3 py-3 border-r border-slate-200/40 text-slate-500 font-mono">Dec 10, 2021</td>
-                            <td className="px-3 py-3 text-slate-500 font-mono">Feb 07, 2026</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-                
-                <p className="font-mono text-[10px] text-neutral-500 font-light leading-relaxed">
-                  Legacy interface required navigating multiple tabs to review a single case.
-                </p>
-              </div>
+            {/* Core Insight Callout */}
+            <div className="bg-amber-50/60 border-l-2 border-amber-500 rounded-r-xl p-4 mb-10 max-w-3xl">
+              <p className="text-sm sm:text-base text-neutral-800 font-serif italic leading-relaxed">
+                "The product provided data, but it didn't help users make decisions."
+              </p>
             </div>
 
-            {/* Why This Matters Sub-section */}
-            <div className="mt-10 pt-10 border-t border-neutral-200/50 text-left">
-              <div className="flex flex-col lg:flex-row gap-8 items-start justify-between">
-                {/* Left side: Quick summary */}
-                <div className="max-w-xs shrink-0">
-                  <span className="font-mono text-[8px] font-extrabold uppercase text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded tracking-widest inline-block mb-3">
-                    THE BUSINESS COST
+            {/* Legacy Interface Showcase Frame */}
+            <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-5 shadow-2xs mb-10" id="old-ui-frame">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-200/60">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  <span className="font-mono text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                    Legacy Experience (Prior to Redesign)
                   </span>
-                  <h3 className="font-serif text-2xl font-black text-neutral-900 tracking-tight leading-tight mb-2">
+                </div>
+                
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setImageFailed(false)}
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-mono border transition-all cursor-pointer ${
+                      !imageFailed 
+                        ? "bg-neutral-900 border-neutral-900 text-white font-medium" 
+                        : "bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-100"
+                    }`}
+                  >
+                    Image View
+                  </button>
+                  <button
+                    onClick={() => setImageFailed(true)}
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-mono border transition-all cursor-pointer ${
+                      imageFailed 
+                        ? "bg-neutral-900 border-neutral-900 text-white font-medium" 
+                        : "bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-100"
+                    }`}
+                  >
+                    Interactive Mockup
+                  </button>
+                </div>
+              </div>
+              
+              {!imageFailed ? (
+                /* Real Image of Old UI Screenshot */
+                <div className="relative overflow-hidden rounded-xl border border-neutral-200/80 bg-white shadow-2xs">
+                  <img 
+                    src={oldUiSrc} 
+                    onError={() => {
+                      if (oldUiSrc === "/src/assets/images/old.png") {
+                        setOldUiSrc("/old.png");
+                      } else if (oldUiSrc === "/old.png") {
+                        setOldUiSrc("/assets/old.png");
+                      } else {
+                        setImageFailed(true);
+                      }
+                    }}
+                    alt="Legacy ERP System (Legal Portfolio Beta)" 
+                    className="w-full h-auto object-cover max-h-[440px]"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+              ) : (
+                /* High-Fidelity CSS Reconstruction of Legacy UI */
+                <div className="relative overflow-hidden rounded-xl border border-neutral-200/80 bg-white font-sans shadow-2xs select-none">
+                  {/* Header breadcrumb */}
+                  <div className="bg-neutral-50 border-b border-neutral-200/60 px-4 py-2 flex items-center gap-1.5 text-[10px] text-neutral-500 font-medium">
+                    <Briefcase className="w-3 h-3 text-neutral-400" />
+                    <span>testing</span>
+                    <span>/</span>
+                    <span>Legal</span>
+                    <span>/</span>
+                    <span className="text-neutral-800 font-semibold">Legal Portfolio</span>
+                  </div>
+
+                  {/* App Title & Tabs */}
+                  <div className="bg-white border-b border-neutral-200/60 px-4 pt-3 flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-neutral-900 text-sm font-bold tracking-tight">Legal Portfolio Beta</h3>
+                    </div>
+                    
+                    <div className="flex">
+                      <div className="border-b-2 border-neutral-900 px-3 pb-1 text-[10px] font-bold text-neutral-900 uppercase tracking-wider">
+                        Case View
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Filter & Search Bar */}
+                  <div className="p-3 bg-neutral-50/50 border-b border-neutral-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2 max-w-md w-full">
+                      <div className="border border-neutral-200 rounded-lg px-2.5 py-1 bg-white text-[10px] font-medium text-neutral-700 flex items-center gap-1 shrink-0">
+                        <span>Loan ID</span>
+                        <span className="text-neutral-400 text-[8px]">▼</span>
+                      </div>
+                      <div className="border border-neutral-200 rounded-lg px-2.5 py-1 bg-white text-[10px] text-neutral-400 flex items-center justify-between w-full">
+                        <span>Search...</span>
+                        <Search className="w-3 h-3 text-neutral-400" />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="border border-neutral-200 rounded-lg px-2.5 py-1 bg-white text-[10px] text-neutral-600">
+                        02 Feb 2026 - 16 Feb 2026 📅
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dense Table View */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-[10px] text-neutral-700 bg-white">
+                      <thead>
+                        <tr className="bg-neutral-50 border-b border-neutral-200 text-neutral-500 font-semibold uppercase tracking-wider">
+                          <th className="px-3 py-2 border-r border-neutral-200/50">Loan ID / Applicant Name</th>
+                          <th className="px-3 py-2 border-r border-neutral-200/50">Case ID</th>
+                          <th className="px-3 py-2 border-r border-neutral-200/50">Matter Type</th>
+                          <th className="px-3 py-2 border-r border-neutral-200/50">Proceeding</th>
+                          <th className="px-3 py-2 border-r border-neutral-200/50">Current Step</th>
+                          <th className="px-3 py-2 border-r border-neutral-200/50">Filing Date</th>
+                          <th className="px-3 py-2 border-r border-neutral-200/50">Last Hearing</th>
+                          <th className="px-3 py-2">Next Hearing</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-neutral-100">
+                        <tr className="hover:bg-neutral-50/50">
+                          <td className="px-3 py-2.5 border-r border-neutral-200/40 font-mono font-medium">keda1772</td>
+                          <td className="px-3 py-2.5 border-r border-neutral-200/40 font-mono font-semibold text-neutral-900 underline">08U7Y</td>
+                          <td className="px-3 py-2.5 border-r border-neutral-200/40">Criminal Proceeding</td>
+                          <td className="px-3 py-2.5 border-r border-neutral-200/40">Cheque Bounce u/s 138 (NI...)</td>
+                          <td className="px-3 py-2.5 border-r border-neutral-200/40 font-mono text-neutral-500">104 - Cases Dispatch</td>
+                          <td className="px-3 py-2.5 border-r border-neutral-200/40 font-mono text-neutral-500">Feb 02, 2022</td>
+                          <td className="px-3 py-2.5 border-r border-neutral-200/40 font-mono text-neutral-500">Feb 04, 2026</td>
+                          <td className="px-3 py-2.5 font-mono text-neutral-500">Mar 28, 2022</td>
+                        </tr>
+                        <tr className="hover:bg-neutral-50/50">
+                          <td className="px-3 py-2.5 border-r border-neutral-200/40 font-mono font-medium">keda1890</td>
+                          <td className="px-3 py-2.5 border-r border-neutral-200/40 font-mono font-semibold text-neutral-900 underline">KIM</td>
+                          <td className="px-3 py-2.5 border-r border-neutral-200/40">Criminal Proceeding</td>
+                          <td className="px-3 py-2.5 border-r border-neutral-200/40">Cheque Bounce u/s 138 (NI...)</td>
+                          <td className="px-3 py-2.5 border-r border-neutral-200/40 font-mono text-neutral-500">104 - Cases Dispatch</td>
+                          <td className="px-3 py-2.5 border-r border-neutral-200/40 font-mono text-neutral-500">Sep 08, 2021</td>
+                          <td className="px-3 py-2.5 border-r border-neutral-200/40 font-mono text-neutral-500">Feb 06, 2026</td>
+                          <td className="px-3 py-2.5 font-mono text-neutral-500">Dec 10, 2021</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+              
+              <p className="font-mono text-[10px] text-neutral-400 font-normal leading-relaxed mt-3 text-center">
+                Dense table format required navigating multiple tabs to review details for a single case.
+              </p>
+            </div>
+
+            {/* Business Risk Impact Cards */}
+            <div className="pt-6 border-t border-neutral-200/60 text-left">
+              <div className="flex flex-col lg:flex-row gap-6 items-start justify-between">
+                <div className="max-w-xs shrink-0">
+                  <span className="font-mono text-[9px] font-bold uppercase text-neutral-500 bg-neutral-100 border border-neutral-200/80 px-2 py-0.5 rounded tracking-wider block w-fit mb-2">
+                    BUSINESS RISKS
+                  </span>
+                  <h3 className="font-serif text-xl font-bold text-neutral-900 tracking-tight leading-tight mb-1.5">
                     Why This Matters
                   </h3>
-                  <p className="text-neutral-500 text-xs sm:text-sm font-light leading-relaxed">
-                    This wasn't just a usability issue. Slow or missed triage directly cascaded into serious operational and business risks.
+                  <p className="text-neutral-500 text-xs font-normal leading-relaxed">
+                    Slow or missed case triage directly escalated into operational bottlenecks and compliance risks.
                   </p>
                 </div>
 
-                {/* Right side: Elegant compact grid */}
                 <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {[
                     {
                       label: "Missed Hearings",
-                      desc: "Failure to attend critical court sessions, resulting in defaults.",
-                      bg: "bg-red-50/40",
-                      border: "border-red-100",
-                      text: "text-red-900",
-                      icon: <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+                      desc: "Failure to attend critical court sessions, resulting in ex-parte defaults.",
+                      icon: AlertTriangle
                     },
                     {
                       label: "Filing Delays",
-                      desc: "Missed timelines triggering administrative or financial penalties.",
-                      bg: "bg-rose-50/40",
-                      border: "border-rose-100",
-                      text: "text-rose-900",
-                      icon: <Clock className="w-3.5 h-3.5 text-rose-500" />
+                      desc: "Missed statutory timelines triggering administrative penalties.",
+                      icon: Clock
                     },
                     {
                       label: "TAT Breaches",
-                      desc: "Delayed turnaround times violating contractual SLA parameters.",
-                      bg: "bg-orange-50/40",
-                      border: "border-orange-100",
-                      text: "text-orange-900",
-                      icon: <AlertCircle className="w-3.5 h-3.5 text-orange-500" />
+                      desc: "Delayed turnaround times violating enterprise SLA agreements.",
+                      icon: AlertCircle
                     },
                     {
-                      label: "Zero Visibility",
-                      desc: "Managers operating blind, unable to assess general team efficiency.",
-                      bg: "bg-amber-50/40",
-                      border: "border-amber-100",
-                      text: "text-amber-900",
-                      icon: <Eye className="w-3.5 h-3.5 text-amber-500" />
+                      label: "Limited Visibility",
+                      desc: "Managers operating without clear line-of-sight on team efficiency.",
+                      icon: Eye
                     },
                     {
                       label: "Manual Overhead",
                       desc: "Frictional administrative labor scaling up with total caseloads.",
-                      bg: "bg-neutral-50/40",
-                      border: "border-neutral-200",
-                      text: "text-neutral-800",
-                      icon: <Scale className="w-3.5 h-3.5 text-neutral-500" />
+                      icon: Scale
                     },
                     {
-                      label: "Platform Abandonment",
-                      desc: "Enterprise clients bypassing the system for raw spreadsheet trackers.",
-                      bg: "bg-blue-50/40",
-                      border: "border-blue-100",
-                      text: "text-blue-900",
-                      icon: <Shield className="w-3.5 h-3.5 text-blue-500" />
+                      label: "Platform Bypass",
+                      desc: "Teams abandoning the portal in favor of offline spreadsheet trackers.",
+                      icon: Shield
                     }
-                  ].map((item, index) => (
-                    <div 
-                      key={index} 
-                      className={`p-3.5 rounded-xl border ${item.bg} ${item.border} flex items-start gap-2.5 transition-all duration-300 hover:translate-y-[-2px] hover:shadow-2xs`}
-                    >
-                      <div className="p-1 rounded-md bg-white border border-neutral-100/80 shrink-0 shadow-3xs mt-0.5">
-                        {item.icon}
+                  ].map((item, index) => {
+                    const RiskIcon = item.icon;
+                    return (
+                      <div 
+                        key={index} 
+                        className="p-3 rounded-xl border border-neutral-200/70 bg-white flex items-start gap-2.5 transition-all duration-200 shadow-2xs"
+                      >
+                        <div className="p-1.5 rounded-lg bg-neutral-50 border border-neutral-200/60 shrink-0 mt-0.5 text-neutral-600">
+                          <RiskIcon className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-semibold text-neutral-900 mb-0.5">{item.label}</h4>
+                          <p className="text-[11px] text-neutral-500 font-normal leading-snug">{item.desc}</p>
+                        </div>
                       </div>
-                      <div className="space-y-0.5">
-                        <h4 className={`text-xs font-bold ${item.text}`}>{item.label}</h4>
-                        <p className="text-[10px] text-neutral-500 font-light leading-snug">{item.desc}</p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -1456,11 +1246,11 @@ export default function LegalPortfolioCaseStudy({ onClose }: LegalPortfolioCaseS
 
 
           {/* ====================================================
-              3.8. BUSINESS GOALS SECTION
+              05. BUSINESS GOALS SECTION
               ==================================================== */}
           <section id="goals" className="scroll-mt-28 text-left border-b border-[#141414]/5 pb-16">
             <span className="font-mono text-[9px] font-extrabold uppercase text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded tracking-widest inline-block mb-6">
-              06 / Business Goals
+              05 / Business Goals
             </span>
             <div>
               <h2 className="font-serif text-3xl sm:text-4xl font-black text-neutral-900 tracking-tight leading-tight mb-4">
@@ -1583,7 +1373,7 @@ export default function LegalPortfolioCaseStudy({ onClose }: LegalPortfolioCaseS
               ==================================================== */}
           <section id="research" className="scroll-mt-28 text-left border-b border-[#141414]/5 pb-16">
             <span className="font-mono text-[9px] font-extrabold uppercase text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded tracking-widest inline-block mb-4">
-              07 / Research
+              06 / Research
             </span>
             <div className="mb-6">
               <h2 className="font-serif text-3xl sm:text-4xl font-black text-neutral-900 tracking-tight leading-tight mb-2">
@@ -1636,206 +1426,530 @@ export default function LegalPortfolioCaseStudy({ onClose }: LegalPortfolioCaseS
               </div>
             </div>
 
+          </section>
 
+          {/* ====================================================
+              07. ECOSYSTEM SECTION (Hanging Clipboards Style)
+              ==================================================== */}
+          <section id="ecosystem" className="scroll-mt-28 text-left border-b border-[#141414]/5 pb-20">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+              <span className="font-mono text-[10px] font-black uppercase text-amber-900 bg-amber-100/80 border border-amber-300/80 px-3 py-1 rounded-md tracking-widest inline-block shadow-3xs">
+                02 / USER ECOSYSTEM
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span className="font-mono text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
+                  3 KEY OPERATIONAL PERSONAS
+                </span>
+              </div>
+            </div>
 
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-black text-neutral-900 tracking-tight leading-tight mb-8">
+              Enterprise Legal Ecosystem
+            </h2>
 
+            {/* Minimal User Ecosystem Board Wrapper */}
+            <div className="mt-8">
+              {/* Personas Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6" id="ecosystem-users">
+                
+                {/* CARD 1: Recovery Managers */}
+                <div className="bg-white border border-neutral-200/80 rounded-2xl p-6 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between">
+                  <div>
+                    {/* Header: Icon & Title */}
+                    <div className="flex items-center gap-3.5 mb-5">
+                      <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/80 flex items-center justify-center shrink-0">
+                        <TrendingUp className="w-5 h-5 text-amber-700" />
+                      </div>
+                      <div>
+                        <h3 className="font-serif font-bold text-xl text-neutral-900 leading-tight">
+                          Recovery Managers
+                        </h3>
+                      </div>
+                    </div>
+
+                    {/* Operational Focus */}
+                    <div className="mb-5">
+                      <span className="font-mono text-[9px] font-bold text-neutral-400 uppercase tracking-widest block mb-2.5">
+                        KEY RESPONSIBILITIES
+                      </span>
+                      <ul className="space-y-2 text-xs text-neutral-600 leading-relaxed font-light">
+                        <li className="flex items-start gap-2">
+                          <span className="text-amber-600 font-bold shrink-0">•</span>
+                          <span><strong className="font-semibold text-neutral-900">Portfolio Health:</strong> Monitors overall recovery metrics and agency performance.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-amber-600 font-bold shrink-0">•</span>
+                          <span><strong className="font-semibold text-neutral-900">Pipeline Delays:</strong> Identifies systemic bottlenecks across recovery stages.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-amber-600 font-bold shrink-0">•</span>
+                          <span><strong className="font-semibold text-neutral-900">SLA Audits:</strong> Reviews monthly agency conversion rates and performance.</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Primary Pain Point */}
+                    <div className="bg-neutral-50 border border-neutral-200/70 rounded-xl p-3">
+                      <span className="font-mono text-[9px] font-bold text-amber-800 uppercase tracking-wider block mb-1">
+                        PAIN POINT
+                      </span>
+                      <p className="text-xs text-neutral-700 font-light leading-relaxed">
+                        Fragmented manual spreadsheet reports and delayed multi-agency feedback loops.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CARD 2: Legal Managers */}
+                <div className="bg-white border border-neutral-200/80 rounded-2xl p-6 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between">
+                  <div>
+                    {/* Header: Icon & Title */}
+                    <div className="flex items-center gap-3.5 mb-5">
+                      <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200/80 flex items-center justify-center shrink-0">
+                        <Scale className="w-5 h-5 text-rose-700" />
+                      </div>
+                      <div>
+                        <h3 className="font-serif font-bold text-xl text-neutral-900 leading-tight">
+                          Legal Managers
+                        </h3>
+                      </div>
+                    </div>
+
+                    {/* Operational Focus */}
+                    <div className="mb-5">
+                      <span className="font-mono text-[9px] font-bold text-neutral-400 uppercase tracking-widest block mb-2.5">
+                        KEY RESPONSIBILITIES
+                      </span>
+                      <ul className="space-y-2 text-xs text-neutral-600 leading-relaxed font-light">
+                        <li className="flex items-start gap-2">
+                          <span className="text-rose-600 font-bold shrink-0">•</span>
+                          <span><strong className="font-semibold text-neutral-900">Court Calendars:</strong> Tracks critical hearing dates and notice deadlines.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-rose-600 font-bold shrink-0">•</span>
+                          <span><strong className="font-semibold text-neutral-900">Compliance Audits:</strong> Ensures alignment with statutory regulatory standards.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-rose-600 font-bold shrink-0">•</span>
+                          <span><strong className="font-semibold text-neutral-900">Advocate Oversight:</strong> Monitors external counsel filing timeliness.</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Primary Pain Point */}
+                    <div className="bg-neutral-50 border border-neutral-200/70 rounded-xl p-3">
+                      <span className="font-mono text-[9px] font-bold text-rose-800 uppercase tracking-wider block mb-1">
+                        PAIN POINT
+                      </span>
+                      <p className="text-xs text-neutral-700 font-light leading-relaxed">
+                        Risk of missed court dates or statutory deadline breaches across regional tribunals.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CARD 3: Operations Teams */}
+                <div className="bg-white border border-neutral-200/80 rounded-2xl p-6 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between">
+                  <div>
+                    {/* Header: Icon & Title */}
+                    <div className="flex items-center gap-3.5 mb-5">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200/80 flex items-center justify-center shrink-0">
+                        <Briefcase className="w-5 h-5 text-emerald-700" />
+                      </div>
+                      <div>
+                        <h3 className="font-serif font-bold text-xl text-neutral-900 leading-tight">
+                          Operations Teams
+                        </h3>
+                      </div>
+                    </div>
+
+                    {/* Operational Focus */}
+                    <div className="mb-5">
+                      <span className="font-mono text-[9px] font-bold text-neutral-400 uppercase tracking-widest block mb-2.5">
+                        KEY RESPONSIBILITIES
+                      </span>
+                      <ul className="space-y-2 text-xs text-neutral-600 leading-relaxed font-light">
+                        <li className="flex items-start gap-2">
+                          <span className="text-emerald-600 font-bold shrink-0">•</span>
+                          <span><strong className="font-semibold text-neutral-900">Bulk Data Entry:</strong> Processes daily case uploads, overrides, and status feeds.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-emerald-600 font-bold shrink-0">•</span>
+                          <span><strong className="font-semibold text-neutral-900">Notice Dispatches:</strong> Issues legal notices and syncs advocate updates.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-emerald-600 font-bold shrink-0">•</span>
+                          <span><strong className="font-semibold text-neutral-900">Record Coordination:</strong> Coordinates physical and digital court records.</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Primary Pain Point */}
+                    <div className="bg-neutral-50 border border-neutral-200/70 rounded-xl p-3">
+                      <span className="font-mono text-[9px] font-bold text-emerald-800 uppercase tracking-wider block mb-1">
+                        PAIN POINT
+                      </span>
+                      <p className="text-xs text-neutral-700 font-light leading-relaxed">
+                        High cognitive load from repetitive single-case data entry and multi-tab context switching.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
           </section>
           {/* ====================================================
-              08. THE SOLUTION SECTION (with Interactive Mascot Guide)
+              05. DESIGN DECISIONS SECTION (BEST SECTION)
               ==================================================== */}
-          <section id="solution" className="scroll-mt-28 text-left border-b border-[#141414]/5 pb-16">
-            <span className="font-mono text-[9px] font-extrabold uppercase text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded tracking-widest inline-block mb-4">
-              08 / THE SOLUTION
-            </span>
-            <h2 className="font-serif text-3xl sm:text-4xl font-black text-neutral-900 tracking-tight leading-tight mb-2">
-              The Solution
-            </h2>
-            <p className="text-neutral-500 font-light leading-relaxed text-sm sm:text-base max-w-2xl mb-4">
-              Instead of adding more features, I redesigned around four things users actually needed.
-            </p>
-
-            {/* Interactive Blueprint header */}
-            <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-full px-4 py-1.5 w-fit mb-12 select-none shadow-3xs">
-              <Sparkles className="w-4 h-4 text-emerald-600 animate-pulse" />
-              <span className="text-xs font-semibold text-emerald-800">
-                Interactive UX Blueprint — Toggle between Legacy Friction and Redesign to analyze structural workflow optimizations.
+          <section id="solution" className="scroll-mt-28 text-left border-b border-[#141414]/5 pb-24 relative">
+            {/* Top Badges */}
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+              <span className="font-mono text-[10px] font-bold uppercase text-amber-800 bg-amber-50/80 border border-amber-200/80 px-3 py-1 rounded-md tracking-widest inline-block">
+                05 / DESIGN DECISIONS
+              </span>
+              <span className="font-mono text-[10px] font-bold text-neutral-400 uppercase tracking-widest hidden sm:inline">
+                APPLE-INSPIRED INTERACTIVE DECISION MATRIX
               </span>
             </div>
 
-            {/* Four Solutions Container */}
-            <div className="space-y-16" id="mascot-guided-solutions">
-              {[
-                {
-                  id: 1,
-                  title: "Prioritize Work Faster",
-                  problem: "Manually reviewing every case to spot urgency",
-                  solutionTags: ["One Case = One Row", "Urgency Indicators", "TAT Ageing"],
-                  result: "High-priority cases visible at a glance",
-                  poseProblem: "card1-problem",
-                  poseSolution: "card1-solution"
-                },
-                {
-                  id: 2,
-                  title: "Find Cases Effortlessly",
-                  problem: "Limited search, repetitive filtering",
-                  solutionTags: ["Comprehensive Search", "Advanced Filters", "Portfolio View"],
-                  result: "Any case found using info already on hand",
-                  poseProblem: "card2-problem",
-                  poseSolution: "card2-solution"
-                },
-                {
-                  id: 3,
-                  title: "Take Action Without Leaving the Page",
-                  problem: "Routine updates required multiple screens",
-                  solutionTags: ["Row-Level Actions", "Bulk Updates", "Split View"],
-                  result: "Fewer clicks, no lost context",
-                  poseProblem: "card3-problem",
-                  poseSolution: "card3-solution"
-                },
-                {
-                  id: 4,
-                  title: "Monitor Portfolio Health",
-                  problem: "No visibility into inactive or overdue cases",
-                  solutionTags: ["Inactivity Filter", "Last Manual Update", "eCourt Tracking"],
-                  result: "Legal Heads proactively spot at-risk cases",
-                  poseProblem: "card4-problem",
-                  poseSolution: "card4-solution"
-                }
-              ].map((card, idx) => {
-                const isSelectedSolution = cardStates[card.id] === "solution";
-                const activePose = isSelectedSolution ? card.poseSolution : card.poseProblem;
+            {/* Headline */}
+            <div className="mb-8 max-w-3xl">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-black text-neutral-900 tracking-tight leading-tight mb-3">
+                05 Design Decisions <span className="text-amber-700 italic font-normal">(Best Section)</span>
+              </h2>
+              <p className="text-neutral-600 font-normal leading-relaxed text-sm sm:text-base max-w-2xl">
+                Explore the core architectural decisions that transformed static legal reports into a high-efficiency actionable workspace. Select any decision to inspect the detailed UX mechanics, problem analysis, and measured outcomes.
+              </p>
+            </div>
 
-                return (
-                  <div 
-                    key={card.id}
-                    className={`flex flex-col md:flex-row items-center gap-8 lg:gap-12 py-8 border-b border-dashed border-neutral-200/80 last:border-0 ${idx % 2 === 1 ? "md:flex-row-reverse" : ""}`}
-                  >
-                    {/* Visual schematic diagram column */}
-                    <div className="w-full md:w-2/5 flex flex-col items-center justify-center relative bg-neutral-50/40 rounded-3xl p-6 border border-neutral-100 shadow-2xs hover:shadow-xs transition-shadow min-h-[240px]">
-                      {/* Interactive pointer connected to the card */}
-                      <div className={`hidden md:block absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-neutral-50 rotate-45 border-l border-b border-neutral-100 ${idx % 2 === 1 ? "-left-2 border-r-0 border-t-0 border-l border-b" : "-right-2 border-l-0 border-b-0 border-r border-t"}`} />
-                      
-                      <motion.div
-                        key={activePose}
-                        initial={{ scale: 0.95, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                        className="relative z-10 flex flex-col items-center w-full"
+            {/* 2-Column Design Decision Interactive Text Matrix */}
+            <div className="bg-amber-50/40 rounded-3xl p-6 sm:p-8 border border-amber-200/80 shadow-xs relative group/section">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch relative z-10">
+                
+                {/* LEFT: Sticky Decision Navigation (4 Cols) */}
+                <div className="lg:col-span-4 flex flex-col gap-2.5 lg:sticky lg:top-28">
+                  <div className="flex items-center justify-between px-1 mb-1">
+                    <span className="font-mono text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
+                      CORE DECISIONS
+                    </span>
+                    <span className="font-mono text-[10px] font-bold text-amber-800 bg-amber-100/80 border border-amber-200/80 px-2 py-0.5 rounded">
+                      0{activeSolutionTab} / 06
+                    </span>
+                  </div>
+                  
+                  {[
+                    { id: 1, num: "01", title: "Reports → Workspace", subtitle: "Paradigm Shift", icon: FileSpreadsheet },
+                    { id: 2, num: "02", title: "Dashboard Radar", subtitle: "Executive Clarity", icon: Activity },
+                    { id: 3, num: "03", title: "Split View Review", subtitle: "Zero Context Loss", icon: Columns },
+                    { id: 4, num: "04", title: "Bulk Action Engine", subtitle: "Batch Processing", icon: CheckSquare },
+                    { id: 5, num: "05", title: "Faceted Smart Filters", subtitle: "Sub-Second Isolation", icon: Filter },
+                    { id: 6, num: "06", title: "Audit Trail Stream", subtitle: "100% Regulatory Trace", icon: Shield }
+                  ].map((item) => {
+                    const isActive = activeSolutionTab === item.id;
+                    const ItemIcon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => setActiveSolutionTab(item.id)}
+                        className={`group w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between ${
+                          isActive
+                            ? "bg-white border-amber-400 text-neutral-900 shadow-md ring-1 ring-amber-400/40 translate-x-1"
+                            : "bg-white/80 border-neutral-200/80 text-neutral-600 hover:bg-white hover:border-neutral-300 hover:text-neutral-900"
+                        }`}
                       >
-                        <BlueprintDiagram pose={activePose} />
-                        
-                        {/* Interactive technical status feedback */}
-                        <span className="text-[10px] font-mono text-neutral-400 mt-4 select-none text-center flex items-center gap-1.5">
-                          <span className={`w-2 h-2 rounded-full inline-block ${isSelectedSolution ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`} />
-                          <span className="uppercase tracking-wider font-bold">
-                            {isSelectedSolution ? "Workflow Optimized" : "Legacy Friction Flow"}
-                          </span>
-                        </span>
-                      </motion.div>
-                    </div>
-
-                    {/* Content column */}
-                    <div className="w-full md:w-3/5 text-left flex flex-col justify-between">
-                      <div>
-                        {/* Section Tag */}
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="font-mono text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">
-                            STEP 0{card.id}
-                          </span>
-                          <span className="w-1.5 h-1.5 rounded-full bg-neutral-300" />
-                          <span className="font-mono text-[10px] font-bold text-emerald-600 uppercase tracking-wide">
-                            {card.title}
-                          </span>
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2.5 rounded-xl shrink-0 transition-colors ${
+                            isActive 
+                              ? "bg-amber-100 text-amber-900 font-bold shadow-2xs" 
+                              : "bg-neutral-100 text-neutral-500 group-hover:text-neutral-800 group-hover:bg-neutral-200/60"
+                          }`}>
+                            <ItemIcon className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <span className={`font-mono text-[9px] font-bold block ${isActive ? "text-amber-800" : "text-neutral-400"}`}>
+                              DECISION {item.num}
+                            </span>
+                            <span className="font-sans text-xs sm:text-sm font-bold block leading-tight text-neutral-900">
+                              {item.title}
+                            </span>
+                            <span className="font-sans text-[10px] text-neutral-500 block">
+                              {item.subtitle}
+                            </span>
+                          </div>
                         </div>
 
-                        {/* Heading */}
-                        <h3 className="font-serif text-xl sm:text-2xl font-black text-neutral-900 mb-4 tracking-tight">
-                          {card.title}
+                        {isActive ? (
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)] animate-pulse shrink-0 ml-2" />
+                        ) : (
+                          <span className="text-neutral-400 group-hover:text-neutral-600 transition-colors text-xs font-mono ml-2">
+                            →
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* RIGHT: Detailed Informative Text Specification Panel (8 Cols) */}
+                <div className="lg:col-span-8 flex flex-col h-full">
+                  {[
+                    {
+                      num: "01",
+                      title: "Static Reports → Actionable Workspace",
+                      category: "PARADIGM SHIFT",
+                      summary: "Transformed passive, static CSV spreadsheet downloads into a live, interactive workspace where legal managers perform status overrides, dispatch notices, and reassign counsel directly.",
+                      problem: "Static CSV reports required manual spreadsheet manipulation just to determine basic case next steps, creating heavy operational friction and zero real-time visibility.",
+                      decision: "Re-engineered static reporting into a 2-click actionable workspace with inline status overrides, dispatch triggers, and real-time backend synchronization.",
+                      mechanics: "A unified grid view with embedded action menus, quick status toggles, and direct notice dispatch buttons that execute server calls without page reloads.",
+                      outcome: "Reduced average case file processing time from 23 minutes to under 2 minutes per file (85% speedup across all legal teams).",
+                      pillars: ["Direct Action Engine", "Zero CSV Dependence", "Real-Time State Sync", "Sub-2 Min Processing"]
+                    },
+                    {
+                      num: "02",
+                      title: "Dashboard Urgency & Risk Radar",
+                      category: "EXECUTIVE CLARITY",
+                      summary: "Replaced cluttered data tables with an executive-level risk radar surfacing upcoming court hearings, statutory SLA deadlines, and unassigned high-value cases.",
+                      problem: "Legal heads had zero line-of-sight into upcoming court dates, statutory SLA deadlines, and unassigned high-value cases, leading to costly default judgments.",
+                      decision: "Surfaced real-time risk badges, hearing calendar alerts, and SLA breakdown metrics at top-of-page view.",
+                      mechanics: "Top-level KPI widgets with color-coded risk indicators (Red = Breached/Urgent, Amber = Pending, Green = On Track), combined with an interactive weekly court hearing calendar.",
+                      outcome: "Zero missed court hearing dates and a 42% increase in overall portfolio SLA compliance within the first 60 days.",
+                      pillars: ["Urgency Badging", "SLA Radar", "Hearing Calendar", "Executive KPI Summary"]
+                    },
+                    {
+                      num: "03",
+                      title: "Split View Context-Preserving Drawer",
+                      category: "ZERO CONTEXT LOSS",
+                      summary: "Introduced an inline slide-out inspector allowing counsel to review complete case documents, court filings, and advocate logs side-by-side with the master case list.",
+                      problem: "Attorneys opened 8+ browser tabs simultaneously to cross-compare case filings, leading to heavy cognitive fatigue and frequent input errors.",
+                      decision: "Designed a side-drawer split view allowing complete case inspection and edits without leaving or resetting the primary list state.",
+                      mechanics: "A responsive slide-over panel that loads case details dynamically on click, maintaining scroll position and filter state in the background list.",
+                      outcome: "Eliminated multi-tab context switching completely with 3x faster individual case file reviews.",
+                      pillars: ["Contextual Drawer", "Side-by-Side Review", "Persistent List State", "Zero Tab Switching"]
+                    },
+                    {
+                      num: "04",
+                      title: "Multi-Select Bulk Action Engine",
+                      category: "BATCH EFFICIENCY",
+                      summary: "Built a batch processing toolbar empowering legal operations to dispatch legal notices and reassign advocates across hundreds of cases in seconds.",
+                      problem: "Dispatching legal notices or updating advocate assignments required tedious, repetitive one-by-one manual record updates.",
+                      decision: "Introduced multi-select batch controls to dispatch legal notices and update advocate assignments in bulk.",
+                      mechanics: "Floating bottom action bar activated upon selecting grid items, offering bulk reassignment, status updates, and automated notice dispatch.",
+                      outcome: "90% reduction in bulk update turnaround time for multi-borrower litigation portfolios.",
+                      pillars: ["Multi-Select Checkbox Grid", "Floating Batch Toolbar", "Automated Notice Dispatch", "Bulk Reassignment"]
+                    },
+                    {
+                      num: "05",
+                      title: "Faceted Smart Filtering & Query Presets",
+                      category: "INSTANT ISOLATION",
+                      summary: "Implemented a sticky multi-attribute filter bar with saved query presets, active tag chips, and real-time result counters.",
+                      problem: "Locating high-risk cases across thousands of active records involved rigid multi-step portal searches and slow page reloads.",
+                      decision: "Built a sticky smart filter bar with saved presets, faceted multi-select, and real-time result counters.",
+                      mechanics: "Collapsible drawer with accordion filter groups (Loan Level, Advocate, Case Type, E-Court Status) that filter the dataset in sub-second time.",
+                      outcome: "Case isolation time dropped from 2.5 minutes to under 5 seconds across portfolios exceeding 10,000+ active case files.",
+                      pillars: ["Faceted Multi-Select", "Saved Presets", "Real-Time Counters", "Sub-Second Response"]
+                    },
+                    {
+                      num: "06",
+                      title: "Immutable Chronological Audit Stream",
+                      category: "REGULATORY TRANSPARENCY",
+                      summary: "Created a time-stamped activity log capturing every edit, advocate reassignment, notice dispatch, and document upload with full user attribution.",
+                      problem: "Manual case status overrides lacked time-stamped paper trails, triggering regulatory audit penalties and internal accountability gaps.",
+                      decision: "Integrated an automated chronological audit stream logging every edit, notice dispatch, and status transition.",
+                      mechanics: "A dedicated audit trail panel with filterable timeline events, user avatars, diff highlights, and regulatory export options.",
+                      outcome: "Achieved 100% regulatory audit compliance and zero compliance penalty findings during statutory inspections.",
+                      pillars: ["Chronological Stream", "User Attribution", "Diff Audit Log", "100% Audit Compliance"]
+                    }
+                  ].filter((item) => item.num === `0${activeSolutionTab}`).map((item) => (
+                    <div key={item.num} className="bg-white border border-neutral-200/90 p-6 sm:p-8 rounded-2xl h-full flex flex-col justify-between shadow-xs space-y-6">
+                      
+                      {/* Top Header & Category */}
+                      <div className="space-y-3 pb-5 border-b border-neutral-200/80">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-mono text-[10px] font-bold text-amber-900 bg-amber-100/80 border border-amber-200 px-3 py-1 rounded-md tracking-wider">
+                            {item.category}
+                          </span>
+                          <span className="font-mono text-xs text-neutral-400 font-bold">
+                            DECISION {item.num} OF 06
+                          </span>
+                        </div>
+                        
+                        <h3 className="font-serif text-2xl sm:text-3xl font-bold text-neutral-900 tracking-tight leading-snug">
+                          {item.title}
                         </h3>
 
-                        {/* Dynamic View Toggle (Problem vs. Redesign) */}
-                        <div className="inline-flex p-1 bg-neutral-100 rounded-xl mb-6 select-none border border-neutral-200/50">
-                          <button
-                            onClick={() => setCardStates(prev => ({ ...prev, [card.id]: "problem" }))}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${!isSelectedSolution ? "bg-white text-red-600 shadow-2xs font-extrabold" : "text-neutral-500 hover:text-neutral-800"}`}
-                          >
-                            The Problem
-                          </button>
-                          <button
-                            onClick={() => setCardStates(prev => ({ ...prev, [card.id]: "solution" }))}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${isSelectedSolution ? "bg-white text-emerald-700 shadow-2xs font-extrabold" : "text-neutral-500 hover:text-neutral-800"}`}
-                          >
-                            Redesign
-                          </button>
+                        <p className="text-neutral-600 text-sm font-normal leading-relaxed">
+                          {item.summary}
+                        </p>
+                      </div>
+
+                      {/* 3 Core Comparison Blocks: Friction -> Solution -> Impact */}
+                      <div className="grid grid-cols-1 gap-4">
+                        
+                        {/* 1. OPERATIONAL FRICTION */}
+                        <div className="bg-rose-50/80 border border-rose-200/80 p-4 sm:p-5 rounded-xl space-y-2">
+                          <div className="flex items-center gap-2 text-rose-800 text-[11px] font-mono font-bold uppercase tracking-wider">
+                            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                            <span>1. OPERATIONAL FRICTION (BEFORE REDESIGN)</span>
+                          </div>
+                          <p className="text-xs sm:text-sm text-neutral-800 font-normal leading-relaxed pl-6">
+                            {item.problem}
+                          </p>
                         </div>
 
-                        {/* Interactive Content Body */}
-                        <AnimatePresence mode="wait">
-                          {!isSelectedSolution ? (
-                            <motion.div
-                              key="problem"
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
-                              transition={{ duration: 0.15 }}
-                              className="bg-red-50/30 border border-red-200/40 rounded-2xl p-5"
-                            >
-                              <span className="font-mono text-[9px] font-black text-red-600 tracking-wider uppercase block mb-2">
-                                ❌ LEGACY FRICTION
-                              </span>
-                              <p className="text-sm text-neutral-700 leading-relaxed font-light">
-                                {card.problem}
-                              </p>
-                            </motion.div>
-                          ) : (
-                            <motion.div
-                              key="solution"
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
-                              transition={{ duration: 0.15 }}
-                              className="space-y-4"
-                            >
-                              {/* Tags */}
-                              <div className="flex flex-wrap gap-2">
-                                {card.solutionTags.map((tag, tIdx) => (
-                                  <span 
-                                    key={tIdx} 
-                                    className="font-mono text-[10px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full shadow-3xs"
-                                  >
-                                    {tag}
-                                  </span>
-                                ))}
-                              </div>
+                        {/* 2. UX INVENTIVE DECISION */}
+                        <div className="bg-amber-50/80 border border-amber-300/80 p-4 sm:p-5 rounded-xl space-y-2 shadow-2xs">
+                          <div className="flex items-center gap-2 text-amber-900 text-[11px] font-mono font-bold uppercase tracking-wider">
+                            <Lightbulb className="w-4 h-4 shrink-0 text-amber-700" />
+                            <span>2. UX ARCHITECTURAL DECISION & MECHANICS</span>
+                          </div>
+                          <p className="text-xs sm:text-sm text-neutral-900 font-medium leading-relaxed pl-6">
+                            {item.decision}
+                          </p>
+                          <div className="mt-2 pt-2 border-t border-amber-200/80 text-xs text-amber-900 font-mono pl-6">
+                            <span className="text-amber-800 font-bold">Interaction Pattern:</span> {item.mechanics}
+                          </div>
+                        </div>
 
-                              {/* Result Card */}
-                              <div className="bg-emerald-50/30 border border-emerald-100/50 rounded-2xl p-5">
-                                <span className="font-mono text-[9px] font-black text-emerald-700 tracking-wider uppercase block mb-1.5">
-                                  🎯 DESIGN OUTCOME
-                                </span>
-                                <p className="text-sm text-neutral-800 font-semibold leading-relaxed">
-                                  {card.result}
-                                </p>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                        {/* 3. MEASURED BUSINESS IMPACT */}
+                        <div className="bg-emerald-50/80 border border-emerald-200/80 p-4 sm:p-5 rounded-xl space-y-2">
+                          <div className="flex items-center gap-2 text-emerald-800 text-[11px] font-mono font-bold uppercase tracking-wider">
+                            <Check className="w-4 h-4 shrink-0 text-emerald-600 font-bold" />
+                            <span>3. MEASURED BUSINESS & USER OUTCOMES</span>
+                          </div>
+                          <p className="text-xs sm:text-sm text-emerald-950 font-bold leading-relaxed pl-6">
+                            {item.outcome}
+                          </p>
+                        </div>
+
+                      </div>
+
+                      {/* Key Architectural Features */}
+                      <div className="pt-4 border-t border-neutral-200/80">
+                        <span className="font-mono text-[10px] text-neutral-500 font-bold block mb-2 uppercase tracking-wider">
+                          Key System Capabilities & Architectural Features:
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {item.pillars.map((p, pIdx) => (
+                            <span key={pIdx} className="font-mono text-[10px] text-neutral-800 bg-amber-50/90 border border-amber-200/90 px-3 py-1 rounded-lg font-medium">
+                              ✓ {p}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                    </div>
+                  ))}
+                </div>
+
+              </div>
+            </div>
+          </section>
+
+          {/* ====================================================
+              06. PRODUCT WALKTHROUGH SECTION
+              ==================================================== */}
+          <section id="walkthrough" className="scroll-mt-28 text-left border-b border-[#141414]/5 pb-24">
+            <span className="font-mono text-[9px] font-bold uppercase text-amber-800 bg-amber-50/80 border border-amber-200/80 px-2.5 py-1 rounded tracking-widest inline-block mb-4">
+              06 / PRODUCT WALKTHROUGH
+            </span>
+
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-black text-neutral-900 tracking-tight leading-tight mb-3">
+              Product Walkthrough
+            </h2>
+
+            <p className="text-neutral-600 font-normal leading-relaxed text-base sm:text-lg max-w-2xl mb-10">
+              See the redesigned Legal Portfolio experience in action.
+            </p>
+
+            {/* Ultra-Sleek MacBook Pro Mockup Container */}
+            <div className="max-w-5xl mx-auto my-8 px-2 sm:px-6 relative group">
+              {/* Ambient Backlight Aura Glow */}
+              <div className="absolute -inset-4 bg-gradient-to-r from-amber-500/10 via-amber-400/15 to-emerald-500/10 rounded-full blur-2xl opacity-70 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+              <div className="relative">
+                {/* Laptop Display Lid Frame */}
+                <div className="relative bg-gradient-to-b from-neutral-800 via-neutral-900 to-neutral-950 p-2 sm:p-3.5 rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] border border-neutral-700/60 ring-1 ring-white/10 overflow-hidden">
+                  
+                  {/* Subtle Top Notch with Glass Camera Eye */}
+                  <div className="absolute top-0 inset-x-0 h-4 bg-neutral-900/90 flex justify-center items-center z-30">
+                    <div className="flex items-center gap-1.5 px-3 py-0.5 rounded-b-md bg-neutral-950 border-x border-b border-neutral-800/80 shadow-2xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-950/80 ring-1 ring-neutral-700/80 flex items-center justify-center">
+                        <span className="w-0.5 h-0.5 rounded-full bg-emerald-400/90 animate-pulse" />
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Glass Screen Edge with Rounded Display Corners */}
+                  <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-950 pt-3">
+                    
+                    {/* Browser Chrome Header inside Screen */}
+                    <div className="px-3.5 py-2 bg-neutral-900/95 border-b border-neutral-800/80 flex items-center justify-between text-xs select-none backdrop-blur-md">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#FF5F56] border border-[#E0443E] shadow-3xs" />
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E] border border-[#DEA123] shadow-3xs" />
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#27C93F] border border-[#1AAB29] shadow-3xs" />
+                        </div>
+                        <div className="bg-neutral-800/90 px-3 py-1 rounded-lg text-neutral-300 font-mono text-[10px] flex items-center gap-2 border border-neutral-700/60 shadow-inner">
+                          <span className="text-emerald-400 font-bold">🔒</span>
+                          <span className="text-neutral-400">https://</span>
+                          <span className="text-neutral-200 font-medium">workspace.legal-portfolio.internal</span>
+                          <span className="text-neutral-500 hidden sm:inline">/v2/dashboard</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="font-mono text-[9px] text-emerald-400/90 font-bold uppercase tracking-wider hidden sm:inline">
+                          LIVE HIGH-DEF DEMO
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Video Display Viewport */}
+                    <div className="relative aspect-[16/10] bg-neutral-950 flex items-center justify-center overflow-hidden group/video">
+                      <video
+                        src="/src/assets/images/legal_portfolio_demo.mp4"
+                        poster="/src/assets/images/case_management_1783261572643.jpg"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover"
+                      />
+
+                      {/* Glass Sheen / Reflection Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.02] to-white/[0.06] pointer-events-none" />
+
+                      {/* Subtle Bottom Floating Caption Bar */}
+                      <div className="absolute bottom-3 left-3 right-3 px-3.5 py-2 bg-neutral-900/80 backdrop-blur-md rounded-xl border border-white/10 flex items-center justify-between text-white text-xs opacity-90 group-hover/video:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                          <span className="font-sans font-medium text-xs text-neutral-200">
+                            Redesigned Legal Portfolio Dashboard in Action
+                          </span>
+                        </div>
+                        <span className="font-mono text-[10px] text-neutral-400 bg-neutral-800/80 px-2 py-0.5 rounded border border-neutral-700">
+                          1080p • 60 FPS
+                        </span>
                       </div>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              </div>
             </div>
           </section>
           {/* ====================================================
-              09. IMPACT & WHAT'S NEXT SECTION
+              09. BUSINESS IMPACT SECTION
               ==================================================== */}
-          <section id="impact-next" className="scroll-mt-28 text-left pb-20">
+          <section id="impact" className="scroll-mt-28 text-left border-b border-[#141414]/5 pb-20">
             <span className="font-mono text-[9px] font-extrabold uppercase text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded tracking-widest inline-block mb-4">
-              09 / IMPACT &amp; WHAT'S NEXT
+              09 / BUSINESS IMPACT
             </span>
             <h2 className="font-serif text-3xl sm:text-4xl font-black text-neutral-900 tracking-tight leading-tight mb-4">
-              Impact &amp; What's Next
+              Business Impact &amp; Measured Outcomes
             </h2>
             <p className="text-neutral-500 font-light leading-relaxed mb-8 text-xs sm:text-sm max-w-3xl">
               The true validation of any design system is its measurable success. Below is an interactive breakdown of the qualitative and quantitative impact designed to prove real business value at an executive level.
@@ -2120,6 +2234,21 @@ export default function LegalPortfolioCaseStudy({ onClose }: LegalPortfolioCaseS
                 </AnimatePresence>
               </div>
             </div>
+          </section>
+
+          {/* ====================================================
+              10. WHAT'S NEXT & FUTURE ROADMAP SECTION
+              ==================================================== */}
+          <section id="whats-next" className="scroll-mt-28 text-left pb-20">
+            <span className="font-mono text-[9px] font-extrabold uppercase text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded tracking-widest inline-block mb-4">
+              10 / WHAT'S NEXT &amp; ROADMAP
+            </span>
+            <h2 className="font-serif text-3xl sm:text-4xl font-black text-neutral-900 tracking-tight leading-tight mb-4">
+              What's Next &amp; Future Scope
+            </h2>
+            <p className="text-neutral-500 font-light leading-relaxed mb-8 text-xs sm:text-sm max-w-3xl">
+              Looking ahead, the Legal Portfolio platform architecture is built for continuous evolution. Below are the key strategic roadmap features planned for subsequent releases.
+            </p>
 
             {/* BLOCK 3 — FUTURE SCOPE (3 cards in a row with mock UI previews) */}
             <div className="mb-16">
