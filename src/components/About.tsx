@@ -122,7 +122,7 @@ export default function About() {
               <div className="relative bg-white/80 backdrop-blur-xl p-4 border border-neutral-200/50 rounded-[24px] shadow-xl overflow-hidden">
                 <div className="aspect-[4/5] rounded-[18px] overflow-hidden relative">
                   <ImageWithFallback
-                    src="/src/assets/images/neha_saree_portrait_1783342595759.jpg"
+                    src="/src/assets/images/neha_sharma.png"
                     fallback="/src/assets/images/designer_portrait_1783340014240.jpg"
                     alt="Neha Sharma Product Designer Portrait"
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
