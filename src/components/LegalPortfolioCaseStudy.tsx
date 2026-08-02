@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import legalPortfolioVideo from "../assets/images/video.mp4";
+import heroBackgroundImage from "../assets/images/legal_portfolio_1783261537202.jpg";
+import mockupImage from "../assets/images/legal_portfolio_mockup_1783335879310.jpg";
 import { 
   ArrowLeft, Check, AlertCircle, Play, RefreshCw, 
   Layers, Search, Activity, Users, Clock, Cpu, 
@@ -603,7 +605,7 @@ export default function LegalPortfolioCaseStudy({ onClose }: LegalPortfolioCaseS
               <div 
                 className="absolute inset-0 bg-cover bg-center filter blur-xl scale-105 opacity-40 z-0 pointer-events-none"
                 style={{
-                  backgroundImage: `url("/src/assets/images/legal_portfolio_1783261537202.jpg")`
+                  backgroundImage: `url("${heroBackgroundImage}")`
                 }}
               />
               
@@ -644,49 +646,11 @@ export default function LegalPortfolioCaseStudy({ onClose }: LegalPortfolioCaseS
 
                     {/* Display Screen */}
                     <div className="w-full h-full relative bg-neutral-950 flex items-center justify-center select-none group/screen overflow-hidden">
-                      
-                      {/* High-Fidelity UI Image */}
-                      {isMediaTypeVideo && customMediaUrl ? (
-                        <video
-                          src={customMediaUrl}
-                          autoPlay
-                          loop
-                          muted
-                          playsInline
-                          className="w-full h-full object-cover z-0"
-                        />
-                      ) : (
-                        <img
-                          src={customMediaUrl || "/src/assets/images/legal_portfolio_mockup_1783335879310.jpg"}
-                          alt="Legal Portfolio High-Fidelity Enterprise Dashboard Interface"
-                          className="w-full h-full object-cover object-top z-0 transition-transform duration-500 group-hover/screen:scale-[1.01]"
-                        />
-                      )}
-
-                      {/* Hover Interaction Overlay */}
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/screen:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white p-4 z-20">
-                        <Upload className="w-10 h-10 mb-3 text-emerald-400 stroke-[1.5] animate-bounce" />
-                        <h4 className="font-serif text-lg font-bold mb-1 tracking-tight">Upload Custom UI Screenshot</h4>
-                        <p className="text-xs text-neutral-300 text-center max-w-xs font-light mb-4">
-                          Drop any local image or screenshot to instantly preview it live inside the laptop frame
-                        </p>
-                        
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-md flex items-center gap-1.5 hover:scale-105 active:scale-95 cursor-pointer"
-                        >
-                          <Upload className="w-3.5 h-3.5" />
-                          Choose Image File
-                        </button>
-                      </div>
-
-                      {/* Active Custom Media Indicator when uploaded */}
-                      {customMediaUrl && (
-                        <div className="absolute bottom-3 left-3 bg-black/80 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-md text-[9px] font-mono text-emerald-400 font-bold z-20 flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
-                          <span>DISPLAYING CUSTOM SCREENSHOT</span>
-                        </div>
-                      )}
+                      <img
+                        src={mockupImage}
+                        alt="Legal Portfolio High-Fidelity Enterprise Dashboard Interface"
+                        className="w-full h-full object-cover object-top z-0 transition-transform duration-500 group-hover/screen:scale-[1.01]"
+                      />
                     </div>
                   </div>
 
