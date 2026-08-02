@@ -1,4 +1,5 @@
 import { Project, TimelineItem, ProcessStep, SkillCategory } from "./types";
+import mockupImage from "../assets/images/mainphoto.png";
 
 export const projectsData: Project[] = [
   {
@@ -8,7 +9,7 @@ export const projectsData: Project[] = [
     problem: "Legal departments in enterprise environments struggle with fragmented platforms, opaque case progressions, and manual billing audits, leading to high operational friction and cost overruns.",
     solution: "Designed a consolidated legal workspace featuring AI-assisted contract summaries, interactive timeline visualizers, and an automated invoice compliance checking module.",
     impact: "Cut average case life cycles by 40%, accelerated billing audits by 25%, and achieved a 92% user satisfaction score from corporate general counsels.",
-    image: "/src/assets/images/legal_portfolio_mockup_1783335879310.jpg",
+    image: mockupImage,
     video: "/src/assets/images/legal_portfolio_demo.mp4",
     tags: ["Enterprise SaaS", "LegalTech", "Data Visualization", "AI Summary"],
     accentColor: "bg-accent-yellow",
